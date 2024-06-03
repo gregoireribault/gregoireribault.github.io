@@ -995,6 +995,7 @@ class TilePanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defau
 
   startInputListener (e) {
     this.tile.start = !!e.target.checked
+    _event__WEBPACK_IMPORTED_MODULE_1__["default"].broadcast('tile:starting-position:select', this.tile)
   }
 
   getSelectValue (select) {
@@ -1538,6 +1539,15 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
     _event__WEBPACK_IMPORTED_MODULE_2__["default"].on('editor:cancel', () => {
       self.select()
     })
+    _event__WEBPACK_IMPORTED_MODULE_2__["default"].on('tile:starting-position:select', (tile) => {
+      self.selectStartingPosition(tile)
+    })
+  }
+
+  selectStartingPosition (tile) {
+    for (let i = 0; i < this.tiles.length; i++) {
+      this.tiles[i].start = (this.tiles[i] === tile)
+    }
   }
 
   toggleDrawBlock () {
