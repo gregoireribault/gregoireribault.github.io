@@ -365,9 +365,13 @@ __webpack_require__.r(__webpack_exports__);
 
 class Game {
   constructor () {
-    const map = _service_world_manager__WEBPACK_IMPORTED_MODULE_8__["default"].getMap(_constant__WEBPACK_IMPORTED_MODULE_5__.MAP_TYPE_WORLD, 7, 7)
+    const startingPosition = _service_world_manager__WEBPACK_IMPORTED_MODULE_8__["default"].findStartingPosition()
+    if (!startingPosition) {
+      throw new Error('No starting position found')
+    }
+    const map = startingPosition.map
+    const link = new _model_link__WEBPACK_IMPORTED_MODULE_2__["default"](map.x + startingPosition.tileColumn * _constant__WEBPACK_IMPORTED_MODULE_5__.TILE_WIDTH, map.y + startingPosition.tileLine * _constant__WEBPACK_IMPORTED_MODULE_5__.TILE_HEIGHT, _constant__WEBPACK_IMPORTED_MODULE_5__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_5__.TILE_HEIGHT)
 
-    const link = new _model_link__WEBPACK_IMPORTED_MODULE_2__["default"](map.x + 7 * _constant__WEBPACK_IMPORTED_MODULE_5__.TILE_WIDTH, map.y + 7 * _constant__WEBPACK_IMPORTED_MODULE_5__.TILE_HEIGHT, _constant__WEBPACK_IMPORTED_MODULE_5__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_5__.TILE_HEIGHT)
     this.topMenu = new _model_top_menu__WEBPACK_IMPORTED_MODULE_1__.TopMenu(link)
     this.topMenu.initializeMap(map)
 
@@ -1369,7 +1373,7 @@ __webpack_require__.r(__webpack_exports__);
 ;
 
 class Tile {
-  constructor (column, line, x, y, width, height, hitbox, sprite, block, desctructible, tileTransition) {
+  constructor (column, line, x, y, width, height, hitbox, sprite, block, desctructible, tileTransition, start) {
     this.column = column
     this.line = line
     this.x = x
@@ -1384,6 +1388,7 @@ class Tile {
     this.block = block
     this.desctructible = desctructible
     this.tileTransition = tileTransition
+    this.start = start
   }
 
   recomputePaths () {
@@ -2837,7 +2842,7 @@ __webpack_require__.r(__webpack_exports__);
       if (!tiles[column]) {
         tiles[column] = []
       }
-      tiles[column][line] = new _model_tile__WEBPACK_IMPORTED_MODULE_2__.Tile(column, line, x, y, width, height, tileData.hitbox, sprite, block, undefined, transition)
+      tiles[column][line] = new _model_tile__WEBPACK_IMPORTED_MODULE_2__.Tile(column, line, x, y, width, height, tileData.hitbox, sprite, block, undefined, transition, !!tileData.start)
     }
 
     return tiles
@@ -2845,6 +2850,23 @@ __webpack_require__.r(__webpack_exports__);
 
   getMap (type, column, line) {
     return this[type] && this[type][column] && this[type][column][line] ? this[type][column][line] : undefined
+  },
+
+  findStartingPosition () {
+    for (let column = 0; column < this.world.length; column++) {
+      for (let line = 0; line < this.world[column].length; line++) {
+        const map = this.world[column][line]
+        for (const tile of map.tilesIterator()) {
+          if (tile.start) {
+            return {
+              map,
+              tileColumn: tile.column,
+              tileLine: tile.line
+            }
+          }
+        }
+      }
+    }
   }
 });
 

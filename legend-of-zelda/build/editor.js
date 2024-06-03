@@ -798,6 +798,10 @@ class TilePanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defau
     this.transitionTargetTileColumnInputListener = this.transitionTargetTileColumnInputListener.bind(this)
     this.transitionTargetTileLineInputListener = this.transitionTargetTileLineInputListener.bind(this)
     this.transitionEndSelectListener = this.transitionEndSelectListener.bind(this)
+
+    // Start
+    this.startInput = element.querySelector('input[name="starting-tile"]')
+    this.startInputListener = this.startInputListener.bind(this)
   }
 
   start () {
@@ -815,6 +819,15 @@ class TilePanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defau
       self.canvas.closest('.panel-body').classList.add('hidden')
       self.applyTile(undefined)
       self.draw()
+    })
+    _event__WEBPACK_IMPORTED_MODULE_1__["default"].on('menu:map-selector:display-world', () => {
+      self.startInput.closest('.starting-tile-parent').classList.remove('hidden')
+    })
+    _event__WEBPACK_IMPORTED_MODULE_1__["default"].on('menu:map-selector:display-caverns', () => {
+      self.startInput.closest('.starting-tile-parent').classList.add('hidden')
+    })
+    _event__WEBPACK_IMPORTED_MODULE_1__["default"].on('menu:map-selector:display-level1', () => {
+      self.startInput.closest('.starting-tile-parent').classList.add('hidden')
     })
   }
 
@@ -846,6 +859,9 @@ class TilePanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defau
     this.transitionTargetTileColumnInput.removeEventListener('change', this.savedTransitionTargetTileColumnInputListener)
     this.transitionTargetTileLineInput.removeEventListener('change', this.savedTransitionTargetTileLineInputListener)
     this.transitionEndSelect.removeEventListener('change', this.savedTransitionEndSelectListener)
+
+    // Start
+    this.startInput.removeEventListener('change', this.savedStartInputListener)
   }
 
   applyTile (tile) {
@@ -887,6 +903,10 @@ class TilePanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defau
     this.transitionTargetTileLineInput.addEventListener('change', this.savedTransitionTargetTileLineInputListener = this.transitionTargetTileLineInputListener)
     this.transitionEndSelect.addEventListener('change', this.savedTransitionEndSelectListener = this.transitionEndSelectListener)
     this.transitionEnabledInput.dispatchEvent(new Event('change'))
+
+    // Start
+    this.startInput.checked = !!this.tile.start
+    this.startInput.addEventListener('change', this.savedStartInputListener = this.startInputListener)
   }
 
   draw () {
@@ -971,6 +991,10 @@ class TilePanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defau
 
   transitionEndSelectListener (e) {
     this.tile.tileTransition.end = this.getSelectValue(e.target)
+  }
+
+  startInputListener (e) {
+    this.tile.start = !!e.target.checked
   }
 
   getSelectValue (select) {
@@ -1751,7 +1775,7 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
         const sprite = _resource__WEBPACK_IMPORTED_MODULE_6__["default"].getSprite(currentTile.sprite)
         let desctructible
         const transition = new _model_tile_transition__WEBPACK_IMPORTED_MODULE_7__.TileTransition(currentTile.transition?.start, currentTile.transition?.targetMapType, currentTile.transition?.targetMapColumn, currentTile.transition?.targetMapLine, currentTile.transition?.targetTileColumn, currentTile.transition?.targetTileLine, currentTile.transition?.end)
-        const tile = new _model_tile__WEBPACK_IMPORTED_MODULE_1__.Tile(currentTile.x, currentTile.y, mapOffsetX + tileOffsetX, mapOffsetY + tileOffsetY, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT, currentTile.hitbox, sprite, null, desctructible, transition)
+        const tile = new _model_tile__WEBPACK_IMPORTED_MODULE_1__.Tile(currentTile.x, currentTile.y, mapOffsetX + tileOffsetX, mapOffsetY + tileOffsetY, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT, currentTile.hitbox, sprite, null, desctructible, transition, !!currentTile.start)
         tiles.push(tile)
       }
     }
@@ -1813,6 +1837,9 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
               targetTileLine: tile.tileTransition.targetTileLine,
               end: tile.tileTransition.end
             }
+          }
+          if (tile.start) {
+            tileData.start = true
           }
 
           map.tiles.push(tileData)
@@ -2162,7 +2189,7 @@ __webpack_require__.r(__webpack_exports__);
 ;
 
 class Tile {
-  constructor (column, line, x, y, width, height, hitbox, sprite, block, desctructible, tileTransition) {
+  constructor (column, line, x, y, width, height, hitbox, sprite, block, desctructible, tileTransition, start) {
     this.column = column
     this.line = line
     this.x = x
@@ -2177,6 +2204,7 @@ class Tile {
     this.block = block
     this.desctructible = desctructible
     this.tileTransition = tileTransition
+    this.start = start
   }
 
   recomputePaths () {
@@ -2820,7 +2848,7 @@ __webpack_require__.r(__webpack_exports__);
       if (!tiles[column]) {
         tiles[column] = []
       }
-      tiles[column][line] = new _model_tile__WEBPACK_IMPORTED_MODULE_2__.Tile(column, line, x, y, width, height, tileData.hitbox, sprite, block, undefined, transition)
+      tiles[column][line] = new _model_tile__WEBPACK_IMPORTED_MODULE_2__.Tile(column, line, x, y, width, height, tileData.hitbox, sprite, block, undefined, transition, !!tileData.start)
     }
 
     return tiles
@@ -2828,6 +2856,23 @@ __webpack_require__.r(__webpack_exports__);
 
   getMap (type, column, line) {
     return this[type] && this[type][column] && this[type][column][line] ? this[type][column][line] : undefined
+  },
+
+  findStartingPosition () {
+    for (let column = 0; column < this.world.length; column++) {
+      for (let line = 0; line < this.world[column].length; line++) {
+        const map = this.world[column][line]
+        for (const tile of map.tilesIterator()) {
+          if (tile.start) {
+            return {
+              map,
+              tileColumn: tile.column,
+              tileLine: tile.line
+            }
+          }
+        }
+      }
+    }
   }
 });
 
