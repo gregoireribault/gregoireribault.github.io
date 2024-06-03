@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Legend of Zelda</title>
+    </head>
+    <body>
+		<div class="game-container">
+            <canvas id="loz-canvas" width="0" height="0" tabindex="0"></canvas>
+        </div>
+        <form class="game-controls">
+            <div class="form-row">
+                <div>
+                    <input id="control-import-game" type="submit" value="Import">
+                </div>
+                <div>
+                    <a class="link" href="editor.html" target="_blank">Editor</a>
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <label for="play-sounds">Play sounds</label><input id="play-sounds" type="checkbox">
+                </div>
+                <div>
+                    <label for="control-volume">Volume</label><input id="control-volume" min="0" max="100" value="50" type="range">
+                </div>
+            </div>
+            <details>
+                <summary>Debug</summary>
+                <div class="form-row">
+                    <div>
+                        <label for="control-blocking-zones">Display blocking zones</label><input id="control-blocking-zones" type="checkbox">
+                    </div>
+                    <div>
+                        <label for="control-blocking-zones-color">Blocking zones color</label><input id="control-blocking-zones-color" type="color" value="#ff0000">
+                    </div>
+                </div>
+                <div class="form-row link-inventory">
+                    <div>
+                        <label for="control-rupees">Set rupees</label><input id="control-rupees" type="number" min="0" max="250"><input id="control-rupees-submit" type="submit" value="Validate">
+                    </div>
+                </div>
+                <div class="form-row link-inventory">
+                    <div>
+                        <label for="control-keys">Set keys</label><input id="control-keys" type="number" min="0" max="250"><input id="control-keys-submit" type="submit" value="Validate">
+                    </div>
+                </div>
+                <div class="form-row link-inventory">
+                    <div>
+                        <label for="control-bombs">Set bombs</label><input id="control-bombs" type="number" min="0" max="16"><input id="control-bombs-submit" type="submit" value="Validate">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <input id="control-convert-file-to-loz" type="submit" value="Convert to LOZ">
+                    </div>
+                </div>
+            </details>
+        </form>
+		<script src="/build/index.js"></script>
+		<script src="/build/game.js"></script>
+    </body>
+</html>

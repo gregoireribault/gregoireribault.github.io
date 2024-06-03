@@ -1,0 +1,183 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Editor - Legend of Zelda</title>
+		<style>
+			body { position: relative; }
+			.hidden { display: none; }
+			.overlay { width: 200px; border: 1px solid #000; background: #f7d8a5; }
+			.overlay .left { float: left; width: 50%; }
+			.overlay .right { float: right; width: 50%; }
+			.overlay p { display: block; width: 90%; margin: 5px auto; padding-bottom: 5px; border-bottom: 1px solid #000; text-align: center; }
+			.overlay attribute-field:after { display: block; content: ''; clear: both; }
+			.overlay label { display: block; width: 85%; height: 23px; margin: 2px 0; line-height: 23px; text-align: right; }
+			.overlay input { width: 75%; margin: 2px 0; }
+			.overlay button { display: block; width: 79px; margin: 5px auto; }
+		</style>
+    </head>
+    <body>
+        <div id="panels-container" class="panel">
+            <div class="panel-header draggable">
+                <div class="menu dropdown">
+                    <a class="caption empty"></a>
+                    <div class="dropdown-content">
+                        <a href="#importOldWorld (JSON)" style="display: none;">Import old world (JSON)</a>
+                        <a href="#importWorld (JSON)" style="display: none;">Import world (JSON)</a>
+                        <a href="#importDefaultWorld (LOZ)">Import default game</a>
+                        <a href="#importWorld (LOZ)">Import game</a>
+                        <a href="#exportWorld (JSON)" style="display: none;">Export world (JSON)</a>
+                        <a href="#exportWorld (LOZ)">Export game</a>
+                        <a href="#toggleBlock">Toggle block</a>
+                    </div>
+                </div>
+                <div class="menu dropdown">
+                    <a class="caption">World</a>
+                    <div class="dropdown-content">
+                        <a href="#displayWorld">World</a>
+                        <a href="#displayCaverns">Caverns</a>
+                        <a href="#displayLevel1">Level 1</a>
+                        <a href="#displayLevel2">Level 2</a>
+                        <a href="#displayLevel3">Level 3</a>
+                        <a href="#displayLevel4">Level 4</a>
+                        <a href="#displayLevel5">Level 5</a>
+                        <a href="#displayLevel6">Level 6</a>
+                        <a href="#displayLevel7">Level 7</a>
+                        <a href="#displayLevel8">Level 8</a>
+                        <a href="#displayLevel9">Level 9</a>
+                    </div>
+                </div>
+                <div class="tool-descriptor">
+                    <div class="selected-tile hidden">
+                        <span>Selected tile:</span>
+                        <div class="selected-tile-sprite">
+                            <canvas width="0" height="0"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <h2>Editor</h2>
+            </div>
+            <div class="panel-body">
+                <div id="tile-selector-panel" class="panel">
+                    <div class="panel-header draggable">
+                        <h2>Tiles</h2>
+                    </div>
+                    <div class="panel-body">
+                        <canvas width="0" height="0"></canvas>
+                    </div>
+                </div>
+                <div id="tile-panel" class="panel">
+                    <div class="panel-header draggable">
+                        <h2>Selected Tile</h2>
+                    </div>
+                    <div class="panel-body hidden">
+                        <div class="d-flex fx-column m-4 p-4 border-grey-1">
+                            <div class="h-20">Block</div>
+                            <div class="tile-block-details d-flex fx-row">
+                                <canvas width="0" height="0"></canvas>
+                                <input name="tile-hitbox-0" type="checkbox"></input>
+                                <input name="tile-hitbox-1" type="checkbox"></input>
+                                <input name="tile-hitbox-2" type="checkbox"></input>
+                                <input name="tile-hitbox-3" type="checkbox"></input>
+                                <input name="tile-hitbox-4" type="checkbox"></input>
+                                <input name="tile-hitbox-5" type="checkbox"></input>
+                                <input name="tile-hitbox-6" type="checkbox"></input>
+                                <input name="tile-hitbox-7" type="checkbox"></input>
+                            </div>
+                        </div>
+                        <div class="d-flex fx-column m-4 p-4 border-grey-1">
+                            <div class="h-20">Destructible <input type="checkbox" name="destructible-enabled" data-target="destructible-section"></div>
+                            <div id="destructible-section" class="d-flex fx-row hidden">
+                                <div class="d-flex fx-column">
+                                    <select name="destructible-select">
+                                        <option></option>
+                                        <option value="bomb">bomb</option>
+                                        <option value="flame">flame</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex fx-column m-4 p-4 border-grey-1">
+                            <div class="h-20">Transition <input type="checkbox" name="transition-enabled" data-target="transition-section"></div>
+                            <div id="transition-section" class="d-flex fx-row hidden">
+                                <div class="fx-grow">
+                                    <div class="transition-caption">Start</div>
+                                    <div class="d-flex fx-column">
+                                        <select name="transition-start-select" class="mt-16">
+                                            <option value=""></option>
+                                            <option value="cave_entrance">cave_entrance</option>
+                                            <option value="cave_exit">cave_exit</option>
+                                            <option value="cave_stairs_down">cave_stairs_down</option>
+                                            <option value="cave_stairs_up">cave_stairs_up</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="fx-grow">
+                                    <div class="transition-caption">Target map</div>
+                                    <div class="d-flex fx-column">
+                                        <label for="transition-target-map-type-select">Type</label>
+                                        <select name="transition-target-map-type-select">
+                                            <option value=""></option>
+                                            <option value="world">world</option>
+                                            <option value="caverns">caverns</option>
+                                            <option value="level1">level1</option>
+                                            <option value="level2">level2</option>
+                                            <option value="level3">level3</option>
+                                            <option value="level4">level4</option>
+                                            <option value="level5">level5</option>
+                                            <option value="level6">level6</option>
+                                            <option value="level7">level7</option>
+                                            <option value="level8">level8</option>
+                                            <option value="level9">level9</option>
+                                        </select>
+                                    </div>
+                                    <div class="d-flex fx-column">
+                                        <label for="transition-target-map-column-input">Column</label>
+                                        <input type="number" step="1" min="0" name="transition-target-map-column-input">
+                                    </div>
+                                    <div class="d-flex fx-column">
+                                        <label for="transition-target-map-line-input">Line</label>
+                                        <input type="number" step="1" min="0" name="transition-target-map-line-input">
+                                    </div>
+                                </div>
+                                <div class="fx-grow">
+                                    <div class="transition-caption">Target tile</div>
+                                    <div class="d-flex fx-column">
+                                        <label for="transition-target-tile-column-input">Column</label>
+                                        <input type="number" step=".1" min="0" name="transition-target-tile-column-input">
+                                    </div>
+                                    <div class="d-flex fx-column">
+                                        <label for="transition-target-tile-column-input">Line</label>
+                                        <input type="number" step=".1" min="0" name="transition-target-tile-line-input">
+                                    </div>
+                                </div>
+                                <div class="fx-grow">
+                                    <div class="transition-caption">End</div>
+                                    <div class="d-flex fx-column">
+                                        <select name="transition-end-select" class="mt-16">
+                                            <option value=""></option>
+                                            <option value="cave_entrance">cave_entrance</option>
+                                            <option value="cave_exit">cave_exit</option>
+                                            <option value="cave_stairs_down">cave_stairs_down</option>
+                                            <option value="cave_stairs_up">cave_stairs_up</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="world-panel" class="panel">
+                    <div class="panel-header draggable">
+                        <h2>World</h2>
+                    </div>
+                    <div class="panel-body">
+                        <canvas width="0" height="0"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+		<script src="/build/index.js"></script>
+		<script src="/build/editor.js"></script>
+    </body>
+</html>
