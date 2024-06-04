@@ -2869,18 +2869,23 @@ __webpack_require__.r(__webpack_exports__);
   },
 
   findStartingPosition () {
-    for (let column = 0; column < this.world.length; column++) {
-      for (let line = 0; line < this.world[column].length; line++) {
-        const map = this.world[column][line]
-        for (const tile of map.tilesIterator()) {
-          if (tile.start) {
-            return {
-              map,
-              tileColumn: tile.column,
-              tileLine: tile.line
-            }
+    for (const map of this.mapsIterator(_constant__WEBPACK_IMPORTED_MODULE_0__.MAP_TYPE_WORLD)) {
+      for (const tile of map.tilesIterator()) {
+        if (tile.start) {
+          return {
+            map,
+            tileColumn: tile.column,
+            tileLine: tile.line
           }
         }
+      }
+    }
+  },
+
+  * mapsIterator (type) {
+    for (let column = 0; column < this[type].length; column++) {
+      for (let line = 0; line < this[type][column].length; line++) {
+        yield this[type][column][line]
       }
     }
   }

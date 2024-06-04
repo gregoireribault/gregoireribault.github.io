@@ -371,9 +371,10 @@ class Game {
     }
     const map = startingPosition.map
     const link = new _model_link__WEBPACK_IMPORTED_MODULE_2__["default"](map.x + startingPosition.tileColumn * _constant__WEBPACK_IMPORTED_MODULE_5__.TILE_WIDTH, map.y + startingPosition.tileLine * _constant__WEBPACK_IMPORTED_MODULE_5__.TILE_HEIGHT, _constant__WEBPACK_IMPORTED_MODULE_5__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_5__.TILE_HEIGHT)
+    link.map = map
 
     this.topMenu = new _model_top_menu__WEBPACK_IMPORTED_MODULE_1__.TopMenu(link)
-    this.topMenu.initializeMap(map)
+    // this.topMenu.initializeMap(map)
 
     this.map = map
     this.nextMap = undefined
@@ -413,7 +414,7 @@ class Game {
 
     context.translate(-this.map.x, -this.map.y)
     this.map.draw(context)
-    if (this.nextMap) {
+    if (this.mapDragTransitionPlaying) {
       this.nextMap.draw(context)
     }
     this.link.draw(context, 0, 0, this.getLinkActionFromInput(_service_input_manager__WEBPACK_IMPORTED_MODULE_3__["default"].getCurrentDrawingAction()))
@@ -442,6 +443,7 @@ class Game {
     let tileTransition
     if (this.link.tile && !linkFrontTile) {
       tileTransition = this.createDynamicMapDragTileTransition()
+      this.mapDragTransitionPlaying = true
     }
     if (this.link.tile && linkFrontTile) {
       tileTransition = this.link.tile.tileTransition
@@ -465,7 +467,9 @@ class Game {
       }
       this.link.tile = _service_hitbox_manager__WEBPACK_IMPORTED_MODULE_4__["default"].getLinkTile(this.map, this.link)
       this.link.tile.tileTransition.enabled = false
+      this.link.map = this.map
       this.transitionPlaying = false
+      this.mapDragTransitionPlaying = false
       tileTransition.enabled = false
       return
     }
@@ -1476,9 +1480,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _resource__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../resource */ "../assets/js/resource.js");
 /* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../constant */ "../assets/js/constant.js");
 /* harmony import */ var _service_text_manager__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../service/text-manager */ "../assets/js/service/text-manager.js");
+/* harmony import */ var _service_world_manager__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../service/world-manager */ "../assets/js/service/world-manager.js");
 
 
 ;
+
 
 
 
@@ -1511,19 +1517,14 @@ class TopMenu {
     context.fillRect(0, 0, 512, 96)
 
     // Map
+    context.translate(16, 16)
     context.fillStyle = 'grey'
-    context.fillRect(16, 16, MAP_WIDTH, MAP_HEIGTH)
-    if (this.map && this.mapLocationWidth && this.mapLocationHeight) {
-      const savedFillStyle = context.fillStyle
-      context.fillStyle = 'green'
-		    context.fillRect(
-        this.map.offsetX * this.mapLocationWidth + 16,
-        this.map.offsetY * this.mapLocationHeight + 16,
-        this.mapLocationWidth,
-        this.mapLocationHeight
-      )
-      context.fillStyle = savedFillStyle
-    }
+    context.fillRect(0, 0, MAP_WIDTH, MAP_HEIGTH)
+    const mapWidth = 128 / _constant__WEBPACK_IMPORTED_MODULE_1__.WORLD_MAPS_PER_LINE
+    const mapHeight = 64 / _constant__WEBPACK_IMPORTED_MODULE_1__.WORLD_MAPS_PER_COLUMN
+    context.fillStyle = 'green'
+    context.fillRect(this.link.map.column * mapWidth, this.link.map.line * mapHeight, mapWidth, mapHeight)
+    context.translate(-16, -16)
 
     // Rupees
     _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite('menu_rupee').draw(context, 160, 16, SPRITE_WIDTH, SPRITE_HEIGHT)
@@ -2853,18 +2854,23 @@ __webpack_require__.r(__webpack_exports__);
   },
 
   findStartingPosition () {
-    for (let column = 0; column < this.world.length; column++) {
-      for (let line = 0; line < this.world[column].length; line++) {
-        const map = this.world[column][line]
-        for (const tile of map.tilesIterator()) {
-          if (tile.start) {
-            return {
-              map,
-              tileColumn: tile.column,
-              tileLine: tile.line
-            }
+    for (const map of this.mapsIterator(_constant__WEBPACK_IMPORTED_MODULE_0__.MAP_TYPE_WORLD)) {
+      for (const tile of map.tilesIterator()) {
+        if (tile.start) {
+          return {
+            map,
+            tileColumn: tile.column,
+            tileLine: tile.line
           }
         }
+      }
+    }
+  },
+
+  * mapsIterator (type) {
+    for (let column = 0; column < this[type].length; column++) {
+      for (let line = 0; line < this[type][column].length; line++) {
+        yield this[type][column][line]
       }
     }
   }
