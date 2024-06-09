@@ -488,10 +488,10 @@ class AbstractPanel {
   constructor (element, container, minWidth, minHeight, maxWidth, maxHeight) {
     this.element = element
     this.container = container
-    this.minWidth = minWidth
-    this.minHeight = minHeight
-    this.maxWidth = maxWidth
-    this.maxHeight = maxHeight
+    this.minWidth = minWidth ?? 0
+    this.minHeight = minHeight ?? 0
+    this.maxWidth = maxWidth ?? 1000
+    this.maxHeight = maxHeight ?? 1000
 
     this.updateCanvasSize(element)
 
@@ -501,9 +501,9 @@ class AbstractPanel {
     Interact__WEBPACK_IMPORTED_MODULE_0___default()(element).resizable({
       edges: { top: false, left: true, bottom: true, right: true },
       modifiers: [
-        Interact__WEBPACK_IMPORTED_MODULE_0___default().modifiers.restrict({
+        /* interact.modifiers.restrict({
           restriction: container
-        })
+        }) */
       ],
       listeners: {
         move: function (event) {
@@ -515,12 +515,12 @@ class AbstractPanel {
     const draggable = element.querySelector('.draggable')
     if (draggable) {
       Interact__WEBPACK_IMPORTED_MODULE_0___default()(draggable).draggable({
-        inertia: true,
+        // inertia: true,
         modifiers: [
-          Interact__WEBPACK_IMPORTED_MODULE_0___default().modifiers.restrict({
+          /* interact.modifiers.restrict({
             restriction: container,
-            endOnly: true
-          })
+            //endOnly: true
+          }) */
         ],
         listeners: {
           move (event) {
@@ -606,7 +606,6 @@ __webpack_require__.r(__webpack_exports__);
 
 class GeneralMenu {
   constructor (
-    importOldWorldJsonButton,
     importWorldJsonButton,
     importDefaultWorldLozButton,
     importWorldLozButton,
@@ -614,10 +613,6 @@ class GeneralMenu {
     exportWorldLozButton,
     toggleBlockButton
   ) {
-    importOldWorldJsonButton.addEventListener('click', e => {
-      e.preventDefault()
-      _event__WEBPACK_IMPORTED_MODULE_0__["default"].broadcast('menu:general:import-old-world-json')
-    })
     importWorldJsonButton.addEventListener('click', e => {
       e.preventDefault()
       _event__WEBPACK_IMPORTED_MODULE_0__["default"].broadcast('menu:general:import-world-json')
@@ -646,6 +641,225 @@ class GeneralMenu {
 }
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (GeneralMenu);
+
+
+/***/ }),
+
+/***/ "../assets/js/editor/panel/map-panel.js":
+/*!**********************************************!*\
+  !*** ../assets/js/editor/panel/map-panel.js ***!
+  \**********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   MapPanel: () => (/* binding */ MapPanel)
+/* harmony export */ });
+/* harmony import */ var Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! Panel/abstract-panel */ "../assets/js/editor/panel/abstract-panel.js");
+/* harmony import */ var _event__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../event */ "../assets/js/editor/event.js");
+/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../constant */ "../assets/js/constant.js");
+/* harmony import */ var _resource__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../resource */ "../assets/js/resource.js");
+/* harmony import */ var _model_extra__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../model/extra */ "../assets/js/model/extra.js");
+
+
+;
+
+
+
+
+
+const PREVIEW_WIDTH = 145
+const PREVIEW_HEIGHT = 100
+
+class MapPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["default"] {
+  constructor (element, container, minWidth, minHeight, maxWidth, maxHeight) {
+    super(element, container, minWidth, minHeight, maxWidth, maxHeight)
+
+    // Preview
+    this.canvas = element.querySelector('canvas')
+    this.context = this.canvas.getContext('2d')
+    this.canvas.width = PREVIEW_WIDTH
+    this.canvas.height = PREVIEW_HEIGHT
+
+    // Sprites
+    this.addExtraButton = element.querySelector('button#add-extra')
+    this.extraList = element.querySelector('div#extra-list')
+    this.extraSectionTemplate = this.extraList.querySelector('.extra-section')
+    this.extraSectionTemplate.remove()
+    this.addExtraButtonListener = this.addExtraButtonListener.bind(this)
+
+    this.start()
+    this.draw()
+  }
+
+  start () {
+    const self = this
+
+    _event__WEBPACK_IMPORTED_MODULE_1__["default"].on('world-panel:select-map', (map) => {
+      self.canvas.closest('.panel-body').classList.remove('hidden')
+      self.applyMap(map)
+      self.draw()
+    })
+    _event__WEBPACK_IMPORTED_MODULE_1__["default"].on('editor:cancel', () => {
+      self.canvas.closest('.panel-body').classList.add('hidden')
+      self.applyMap(undefined)
+      self.draw()
+    })
+    _event__WEBPACK_IMPORTED_MODULE_1__["default"].on('menu:map-selector:display-world', () => {
+      self.applyMap()
+      self.draw()
+    })
+    _event__WEBPACK_IMPORTED_MODULE_1__["default"].on('menu:map-selector:display-caverns', () => {
+      self.applyMap()
+      self.draw()
+    })
+    _event__WEBPACK_IMPORTED_MODULE_1__["default"].on('menu:map-selector:display-level1', () => {
+      self.applyMap()
+      self.draw()
+    })
+  }
+
+  reset () {
+    this.element.querySelectorAll('.section').forEach((element) => {
+      element.classList.add('hidden')
+    })
+
+    if (!this.map) {
+      return
+    }
+
+    // Extras
+    this.addExtraButton.removeEventListener('click', this.savedAddExtraButtonListener)
+    this.resetSections(this.extraList)
+  }
+
+  applyMap (map) {
+    this.reset()
+    this.map = map
+    if (!map) {
+      return
+    }
+
+    this.element.querySelectorAll('.section').forEach((element) => {
+      element.classList.remove('hidden')
+    })
+
+    // Extras
+    this.addExtraButton.addEventListener('click', this.savedAddExtraButtonListener = this.addExtraButtonListener)
+    this.initExtras()
+  }
+
+  addExtraButtonListener (e) {
+    e.preventDefault()
+    this.addExtraSection()
+  }
+
+  addExtraSection () {
+    const index = this.extraList.children.length
+    const section = this.extraSectionTemplate.cloneNode(true)
+    const namedElements = section.querySelectorAll('[name]')
+    namedElements.forEach(namedElement => {
+      namedElement.dataset.index = index
+    })
+    const self = this
+    section.querySelector('button[name="extra-remove"]').addEventListener('click', (e) => {
+      e.preventDefault()
+      section.remove()
+      self.reorderSections(self.extraList)
+      self.updateExtras(self.extraList)
+    })
+    section.querySelector('select[name="extra-select"]').addEventListener('change', (e) => {
+      e.preventDefault()
+      self.updateExtras(self.extraList)
+    })
+    section.querySelector('input[name="extra-column-input"]').addEventListener('change', (e) => {
+      e.preventDefault()
+      self.updateExtras(self.extraList)
+    })
+    section.querySelector('input[name="extra-line-input"]').addEventListener('change', (e) => {
+      e.preventDefault()
+      self.updateExtras(self.extraList)
+    })
+    this.extraList.appendChild(section)
+    return section
+  }
+
+  reorderSections (container) {
+    const sections = container.querySelectorAll('.extra-section')
+    sections.forEach((section, index) => {
+      const namedElements = section.querySelectorAll('[name]')
+      namedElements.forEach(namedElement => {
+        namedElement.dataset.index = index
+      })
+    })
+  }
+
+  resetSections (container) {
+    container.replaceChildren()
+  }
+
+  initExtras () {
+    for (const extra of this.map.extras) {
+      const section = this.addExtraSection()
+      this.setSelectValue(section.querySelector('select[name="extra-select"]'), extra.sprite.name)
+      section.querySelector('input[name="extra-column-input"]').value = extra.column
+      section.querySelector('input[name="extra-line-input"]').value = extra.line
+    }
+  }
+
+  updateExtras (container) {
+    this.map.extras = []
+    container.querySelectorAll('.extra-section').forEach((section, index) => {
+      const sprite = _resource__WEBPACK_IMPORTED_MODULE_3__["default"].getSprite(this.getSelectValue(section.querySelector('select[name="extra-select"]')))
+      const column = section.querySelector('input[name="extra-column-input"]').value ? parseFloat(section.querySelector('input[name="extra-column-input"]').value) : undefined
+      const line = section.querySelector('input[name="extra-line-input"]').value ? parseFloat(section.querySelector('input[name="extra-line-input"]').value) : undefined
+      if (!!sprite && !!column && !!line) {
+        const x = this.map.x + _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_WIDTH * column
+        const y = this.map.y + _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_HEIGHT * line
+        const extra = new _model_extra__WEBPACK_IMPORTED_MODULE_4__.Extra(column, line, x, y, _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_HEIGHT, sprite)
+        this.map.extras.push(extra)
+      }
+    })
+    this.draw()
+    _event__WEBPACK_IMPORTED_MODULE_1__["default"].broadcast('map-panel:update')
+  }
+
+  draw () {
+    this.context.fillStyle = this.color
+    this.context.fillRect(0, 0, this.canvas.width, this.canvas.height)
+
+    if (this.map) {
+      this.context.save()
+
+      this.context.scale(PREVIEW_WIDTH / this.map.width, PREVIEW_HEIGHT / this.map.height)
+      this.context.translate(-this.map.x, -this.map.y)
+      this.map.draw(this.context)
+      this.context.restore()
+    }
+  }
+
+  resizePanel (element, event) {
+    super.resizePanel(element, event)
+    this.canvas.width = PREVIEW_WIDTH
+    this.canvas.height = PREVIEW_HEIGHT
+  }
+
+  getSelectValue (select) {
+    return select.options[select.selectedIndex].value
+  }
+
+  setSelectValue (select, value) {
+    select.selectedIndex = undefined
+    for (let i = 0; i < select.options.length; i++) {
+      if (select.options[i].value == value) {
+        select.selectedIndex = i
+      }
+    }
+  }
+}
+
+
 
 
 /***/ }),
@@ -746,9 +960,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! Panel/abstract-panel */ "../assets/js/editor/panel/abstract-panel.js");
 /* harmony import */ var _event__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../event */ "../assets/js/editor/event.js");
 /* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../constant */ "../assets/js/constant.js");
+/* harmony import */ var _resource__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../resource */ "../assets/js/resource.js");
 
 
 ;
+
 
 
 
@@ -802,6 +1018,9 @@ class TilePanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defau
     // Start
     this.startInput = element.querySelector('input[name="starting-tile"]')
     this.startInputListener = this.startInputListener.bind(this)
+
+    this.start()
+    this.draw()
   }
 
   start () {
@@ -821,13 +1040,16 @@ class TilePanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defau
       self.draw()
     })
     _event__WEBPACK_IMPORTED_MODULE_1__["default"].on('menu:map-selector:display-world', () => {
-      self.startInput.closest('.starting-tile-parent').classList.remove('hidden')
+      self.applyTile()
+      self.draw()
     })
     _event__WEBPACK_IMPORTED_MODULE_1__["default"].on('menu:map-selector:display-caverns', () => {
-      self.startInput.closest('.starting-tile-parent').classList.add('hidden')
+      self.applyTile()
+      self.draw()
     })
     _event__WEBPACK_IMPORTED_MODULE_1__["default"].on('menu:map-selector:display-level1', () => {
-      self.startInput.closest('.starting-tile-parent').classList.add('hidden')
+      self.applyTile()
+      self.draw()
     })
   }
 
@@ -837,6 +1059,10 @@ class TilePanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defau
   }
 
   reset () {
+    this.element.querySelectorAll('.section').forEach((element) => {
+      element.classList.add('hidden')
+    })
+
     if (!this.tile) {
       return
     }
@@ -866,11 +1092,14 @@ class TilePanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defau
 
   applyTile (tile) {
     this.reset()
+    this.tile = tile
     if (!tile) {
       return
     }
 
-    this.tile = tile
+    this.element.querySelectorAll('.section').forEach((element) => {
+      element.classList.remove('hidden')
+    })
 
     // Block
     for (let i = 0; i < this.tile.hitbox.length; i++) {
@@ -993,6 +1222,26 @@ class TilePanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defau
     this.tile.tileTransition.end = this.getSelectValue(e.target)
   }
 
+  characterEnabledInputListener (e) {
+    const checked = e.target.checked
+    const target = document.querySelector(`#${e.target.dataset.target}`)
+    if (checked) {
+      target.classList.remove('hidden')
+    } else {
+      target.classList.add('hidden')
+    }
+  }
+
+  itemEnabledInputListener (e) {
+    const checked = e.target.checked
+    const target = document.querySelector(`#${e.target.dataset.target}`)
+    if (checked) {
+      target.classList.remove('hidden')
+    } else {
+      target.classList.add('hidden')
+    }
+  }
+
   startInputListener (e) {
     this.tile.start = !!e.target.checked
     _event__WEBPACK_IMPORTED_MODULE_1__["default"].broadcast('tile:starting-position:select', this.tile)
@@ -1064,6 +1313,14 @@ class TileSelectorPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0_
 
     this.canvas = element.querySelector('canvas')
     this.context = this.canvas.getContext('2d')
+
+    this.init()
+  }
+
+  async init () {
+    await this.loadTiles()
+    this.start()
+    this.draw()
   }
 
   start () {
@@ -1214,21 +1471,21 @@ class TileSelectorPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0_
       const tileData = tilesData.world[i]
       const sprite = _resource__WEBPACK_IMPORTED_MODULE_5__["default"].getSprite(tileData.sprite)
       const block = tileData.block
-      const tile = new _model_tile__WEBPACK_IMPORTED_MODULE_1__.Tile(0, 0, 0, 0, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT, block, sprite.clone(), null, null, new _model_tile_transition__WEBPACK_IMPORTED_MODULE_6__.TileTransition())
+      const tile = new _model_tile__WEBPACK_IMPORTED_MODULE_1__.Tile(0, 0, 0, 0, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT, block, sprite.clone(), null, null, new _model_tile_transition__WEBPACK_IMPORTED_MODULE_6__.TileTransition(), false, null, null, null)
       this.worldTiles.push(tile)
     }
     for (let i = 0; i < tilesData.caverns.length; i++) {
       const tileData = tilesData.caverns[i]
       const sprite = _resource__WEBPACK_IMPORTED_MODULE_5__["default"].getSprite(tileData.sprite)
       const block = tileData.block
-      const tile = new _model_tile__WEBPACK_IMPORTED_MODULE_1__.Tile(0, 0, 0, 0, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT, block, sprite.clone(), null, null, new _model_tile_transition__WEBPACK_IMPORTED_MODULE_6__.TileTransition())
+      const tile = new _model_tile__WEBPACK_IMPORTED_MODULE_1__.Tile(0, 0, 0, 0, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT, block, sprite.clone(), null, null, new _model_tile_transition__WEBPACK_IMPORTED_MODULE_6__.TileTransition(), false, null, null, null)
       this.cavernsTiles.push(tile)
     }
     for (let i = 0; i < tilesData.level1.length; i++) {
       const tileData = tilesData.level1[i]
       const sprite = _resource__WEBPACK_IMPORTED_MODULE_5__["default"].getSprite(tileData.sprite)
       const block = tileData.block
-      const tile = new _model_tile__WEBPACK_IMPORTED_MODULE_1__.Tile(0, 0, 0, 0, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT, block, sprite.clone(), null, null, new _model_tile_transition__WEBPACK_IMPORTED_MODULE_6__.TileTransition())
+      const tile = new _model_tile__WEBPACK_IMPORTED_MODULE_1__.Tile(0, 0, 0, 0, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT, block, sprite.clone(), null, null, new _model_tile_transition__WEBPACK_IMPORTED_MODULE_6__.TileTransition(), false, null, null, null)
       this.level1Tiles.push(tile)
     }
 
@@ -1366,9 +1623,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _utils_io__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../utils/io */ "../assets/js/utils/io.js");
 /* harmony import */ var _resource__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../resource */ "../assets/js/resource.js");
 /* harmony import */ var _model_tile_transition__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../../model/tile-transition */ "../assets/js/model/tile-transition.js");
+/* harmony import */ var _service_world_manager__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../../service/world-manager */ "../assets/js/service/world-manager.js");
 
 
 ;
+
 
 
 
@@ -1421,6 +1680,14 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
 
     this.canvas = element.querySelector('canvas')
     this.context = this.canvas.getContext('2d')
+
+    this.init()
+  }
+
+  async init () {
+    this.start()
+    await this.importEmptyWorld()
+    this.draw()
   }
 
   start () {
@@ -1453,8 +1720,10 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
     })
     this.canvas.addEventListener('mousemove', e => {
       const mouseTile = self.getMouseTile(e.offsetX, e.offsetY)
+      const mouseMap = self.getMouseMap(e.offsetX, e.offsetY)
       if (self.mode === MODE_SPRITE && !!mouseDown) {
-        const newTile = self.applyTile(mouseTile, self.selectedTile.clone())
+        const newTile = self.applyTile(mouseMap, mouseTile, self.selectedTile.clone())
+        _event__WEBPACK_IMPORTED_MODULE_2__["default"].broadcast('world-panel:select-map', mouseMap)
         _event__WEBPACK_IMPORTED_MODULE_2__["default"].broadcast('world-panel:select-tile', newTile)
         return
       }
@@ -1468,8 +1737,10 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
     })
     this.canvas.addEventListener('click', e => {
       const mouseTile = self.getMouseTile(e.offsetX, e.offsetY)
+      const mouseMap = self.getMouseMap(e.offsetX, e.offsetY)
       if (self.mode === MODE_SPRITE) {
-        const newTile = self.applyTile(mouseTile, self.selectedTile.clone())
+        const newTile = self.applyTile(mouseMap, mouseTile, self.selectedTile.clone())
+        _event__WEBPACK_IMPORTED_MODULE_2__["default"].broadcast('world-panel:select-map', mouseMap)
         _event__WEBPACK_IMPORTED_MODULE_2__["default"].broadcast('world-panel:select-tile', newTile)
         return
       }
@@ -1478,6 +1749,7 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
       }
       if (self.mode === MODE_NONE) {
         self.select(mouseTile)
+        _event__WEBPACK_IMPORTED_MODULE_2__["default"].broadcast('world-panel:select-map', mouseMap)
         _event__WEBPACK_IMPORTED_MODULE_2__["default"].broadcast('world-panel:select-tile', mouseTile)
       }
     })
@@ -1500,10 +1772,6 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
       self.display = DISPLAY_LEVEL1
       self.draw()
     })
-    _event__WEBPACK_IMPORTED_MODULE_2__["default"].on('menu:general:import-old-world-json', async () => {
-      const data = await _utils_io__WEBPACK_IMPORTED_MODULE_5__["default"].openFile(_constant__WEBPACK_IMPORTED_MODULE_3__.FILE_TYPE_JSON)
-      self.importOldWorld(data)
-    })
     _event__WEBPACK_IMPORTED_MODULE_2__["default"].on('menu:general:import-world-json', async () => {
       const data = await _utils_io__WEBPACK_IMPORTED_MODULE_5__["default"].openFile(_constant__WEBPACK_IMPORTED_MODULE_3__.FILE_TYPE_JSON)
       self.importWorld(data)
@@ -1517,11 +1785,11 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
       self.importWorld(data)
     })
     _event__WEBPACK_IMPORTED_MODULE_2__["default"].on('menu:general:export-world-json', async () => {
-      const data = JSON.stringify(self.exportWorld())
+      const data = JSON.stringify(_service_world_manager__WEBPACK_IMPORTED_MODULE_8__["default"].exportGame())
       await _utils_io__WEBPACK_IMPORTED_MODULE_5__["default"].dowloadFile(data, _constant__WEBPACK_IMPORTED_MODULE_3__.FILE_TYPE_JSON)
     })
     _event__WEBPACK_IMPORTED_MODULE_2__["default"].on('menu:general:export-world-loz', async () => {
-      const data = JSON.stringify(self.exportWorld())
+      const data = JSON.stringify(_service_world_manager__WEBPACK_IMPORTED_MODULE_8__["default"].exportGame())
       await _utils_io__WEBPACK_IMPORTED_MODULE_5__["default"].dowloadFile(data, _constant__WEBPACK_IMPORTED_MODULE_3__.FILE_TYPE_LOZ)
     })
     _event__WEBPACK_IMPORTED_MODULE_2__["default"].on('menu:general:toggle-block', () => {
@@ -1542,6 +1810,9 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
     _event__WEBPACK_IMPORTED_MODULE_2__["default"].on('tile:starting-position:select', (tile) => {
       self.selectStartingPosition(tile)
     })
+    _event__WEBPACK_IMPORTED_MODULE_2__["default"].on('map-panel:update', () => {
+      self.draw()
+    })
   }
 
   selectStartingPosition (tile) {
@@ -1555,11 +1826,22 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
     this.draw()
   }
 
+  getMouseMap (mouseX, mouseY) {
+    for (const map of _service_world_manager__WEBPACK_IMPORTED_MODULE_8__["default"].mapsIterator(this.display)) {
+      if (map.mapPath && this.isPointInPath(map.mapPath, mouseX, mouseY)) {
+        return map
+      }
+    }
+
+    return undefined
+  }
+
   getMouseTile (mouseX, mouseY) {
-    for (let i = 0; i < this.tiles.length; i++) {
-      const tile = this.tiles[i]
-      if (tile.tilePath && this.isPointInPath(tile.tilePath, mouseX, mouseY)) {
-        return tile
+    for (const map of _service_world_manager__WEBPACK_IMPORTED_MODULE_8__["default"].mapsIterator(this.display)) {
+      for (const tile of map.tilesIterator()) {
+        if (tile.tilePath && this.isPointInPath(tile.tilePath, mouseX, mouseY)) {
+          return tile
+        }
       }
     }
 
@@ -1583,9 +1865,11 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
   }
 
   hover (tile) {
-    for (let i = 0; i < this.tiles.length; i++) {
-      if (this.tiles[i].tilePath) {
-        this.tiles[i].hover = false
+    for (const map of _service_world_manager__WEBPACK_IMPORTED_MODULE_8__["default"].mapsIterator(this.display)) {
+      for (const tile of map.tilesIterator()) {
+        if (tile.tilePath) {
+          tile.hover = false
+        }
       }
     }
     if (tile) {
@@ -1595,9 +1879,11 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
   }
 
   select (tile) {
-    for (let i = 0; i < this.tiles.length; i++) {
-      if (this.tiles[i].tilePath) {
-        this.tiles[i].selected = false
+    for (const map of _service_world_manager__WEBPACK_IMPORTED_MODULE_8__["default"].mapsIterator(this.display)) {
+      for (const tile of map.tilesIterator()) {
+        if (tile.tilePath) {
+          tile.selected = false
+        }
       }
     }
     if (tile) {
@@ -1614,55 +1900,50 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
     this.context.translate(-this.canvas.width / 2, -this.canvas.height / 2)
     this.context.translate(this.translateX, this.translateY)
 
-    // Tiles
-    for (let i = 0; i < this.tiles.length; i++) {
-      const tile = this.tiles[i]
-      tile.draw(this.context)
+    for (const map of _service_world_manager__WEBPACK_IMPORTED_MODULE_8__["default"].mapsIterator(this.display)) {
+      map.draw(this.context)
 
-      if (this.drawBlock && !tile.selected && !tile.hover) {
-        this.context.save()
-        this.context.globalAlpha = 0.5
-        this.context.fillStyle = 'red'
-        this.context.fill(tile.blockPath)
-        this.context.restore()
-      }
-    }
-
-    // Maps limit
-    const mapWidth = _constant__WEBPACK_IMPORTED_MODULE_3__.TILES_PER_LINE * _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH
-    const mapHeight = _constant__WEBPACK_IMPORTED_MODULE_3__.TILES_PER_COLUMN * _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT
-    const nbMapPerLine = (this.display === DISPLAY_WORLD || this.display === DISPLAY_CAVERNS) ? _constant__WEBPACK_IMPORTED_MODULE_3__.WORLD_MAPS_PER_LINE : _constant__WEBPACK_IMPORTED_MODULE_3__.DUNGEON_MAPS_PER_LINE
-    const nbMapPerColumn = (this.display === DISPLAY_WORLD || this.display === DISPLAY_CAVERNS) ? _constant__WEBPACK_IMPORTED_MODULE_3__.WORLD_MAPS_PER_COLUMN : _constant__WEBPACK_IMPORTED_MODULE_3__.DUNGEON_MAPS_PER_COLUMN
-    for (let x = 0; x < nbMapPerLine * mapWidth; x += mapWidth) {
-      for (let y = 0; y < nbMapPerColumn * mapHeight; y += mapHeight) {
-        this.context.strokeStyle = 'grey'
-        this.context.lineWidth = 4
-        this.context.strokeRect(x, y, mapWidth, mapHeight)
-        this.context.lineWidth = 1
-      }
-    }
-
-    // Tiles
-    for (let i = 0; i < this.tiles.length; i++) {
-      const tile = this.tiles[i]
-      this.context.strokeStyle = this.getStrokeColor(tile)
-      this.context.stroke(tile.tilePath)
-    }
-
-    // Selected/hover tile
-    this.context.save()
-    for (let i = 0; i < this.tiles.length; i++) {
-      const tile = this.tiles[i]
+      // Block drawing
+      this.context.save()
       this.context.globalAlpha = 0.5
-      this.context.fillStyle = this.getStrokeColor(tile)
-      if (tile.selected) {
-        this.context.fill(tile.tilePath)
+      this.context.fillStyle = 'red'
+      for (const tile of map.tilesIterator()) {
+        if (this.drawBlock && !tile.selected && !tile.hover) {
+          this.context.fill(tile.blockPath)
+        }
       }
-      if (tile.hover) {
-        this.context.fill(tile.tilePath)
+      this.context.restore()
+
+      // Map limit
+      this.context.save()
+      this.context.strokeStyle = 'grey'
+      this.context.lineWidth = 4
+      this.context.strokeRect(map.x, map.y, map.width, map.height)
+      this.context.restore()
+
+      // Tiles limit
+      this.context.save()
+      this.context.lineWidth = 1
+      for (const tile of map.tilesIterator()) {
+        this.context.strokeStyle = this.getStrokeColor(tile)
+        this.context.stroke(tile.tilePath)
       }
+      this.context.restore()
+
+      // Selected/hover tile
+      this.context.save()
+      for (const tile of map.tilesIterator()) {
+        this.context.globalAlpha = 0.5
+        this.context.fillStyle = this.getStrokeColor(tile)
+        if (tile.selected) {
+          this.context.fill(tile.tilePath)
+        }
+        if (tile.hover) {
+          this.context.fill(tile.tilePath)
+        }
+      }
+      this.context.restore()
     }
-    this.context.restore()
 
     this.context.setTransform(1, 0, 0, 1, 0, 0)
   }
@@ -1691,173 +1972,51 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
     return this.color
   }
 
-  applyTile (oldTile, newTile) {
+  applyTile (map, oldTile, newTile) {
     if (!oldTile || !newTile || oldTile === newTile) {
       return
     }
 
-    const index = this.getTileIndex(oldTile)
+    const tileColumn = oldTile.column
+    const tileLine = oldTile.line
 
-    const tile = new _model_tile__WEBPACK_IMPORTED_MODULE_1__.Tile(oldTile.column, oldTile.line, oldTile.x, oldTile.y, oldTile.width, oldTile.height, newTile.hitbox, newTile.sprite.clone(), newTile.block, newTile.desctructible, newTile.tileTransition.clone())
+    let clonedCharacter = null
+    if (newTile.character) {
+      clonedCharacter = newTile.character.clone()
+    }
+    let clonedItem = null
+    if (newTile.item) {
+      clonedItem = newTile.item.clone()
+    }
+    let clonedOther = null
+    if (newTile.other) {
+      clonedOther = newTile.other.clone()
+    }
+    const tile = new _model_tile__WEBPACK_IMPORTED_MODULE_1__.Tile(oldTile.column, oldTile.line, oldTile.x, oldTile.y, oldTile.width, oldTile.height, newTile.hitbox, newTile.sprite.clone(), newTile.block, newTile.desctructible, newTile.tileTransition.clone(), newTile.start, clonedCharacter, clonedItem, clonedOther)
     const tilePath = new Path2D()
     tilePath.rect(tile.x, tile.y, tile.width, tile.height)
     tile.tilePath = tilePath
 
-    _history__WEBPACK_IMPORTED_MODULE_4__["default"].push(this, () => this.applyTile(tile.clone(), oldTile.clone()), () => this.applyTile(oldTile.clone(), tile.clone()))
-    this.tiles[index] = tile
+    _history__WEBPACK_IMPORTED_MODULE_4__["default"].push(this, () => this.applyTile(map, tile.clone(), oldTile.clone()), () => this.applyTile(map, oldTile.clone(), tile.clone()))
+    map.tiles[tileColumn][tileLine] = tile
 
     this.draw()
 
     return tile
   }
 
-  getTileIndex (tile) {
-    for (let i = 0; i < this.tiles.length; i++) {
-      if (this.tiles[i].x === tile.x && this.tiles[i].y === tile.y) {
-        return i
-      }
-    }
-    return undefined
-  }
-
-  importOldWorld (world) {
-    this.worldTiles = []
-    world.sort(function (mapA, mapB) {
-      // return (mapA.x * WORLD_MAPS_PER_LINE + mapA.y * WORLD_MAPS_PER_COLUMN) - (mapB.x * WORLD_MAPS_PER_LINE + mapB.y * WORLD_MAPS_PER_COLUMN)
-      // return (mapB.x + (WORLD_MAPS_PER_LINE * TILES_PER_LINE * TILE_WIDTH) * mapB.y) - (mapA.x + (WORLD_MAPS_PER_LINE * TILES_PER_LINE * TILE_WIDTH) * mapA.y)
-      return (mapA.x + (_constant__WEBPACK_IMPORTED_MODULE_3__.WORLD_MAPS_PER_LINE * _constant__WEBPACK_IMPORTED_MODULE_3__.TILES_PER_LINE * _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH) * mapA.y) - (mapB.x + (_constant__WEBPACK_IMPORTED_MODULE_3__.WORLD_MAPS_PER_LINE * _constant__WEBPACK_IMPORTED_MODULE_3__.TILES_PER_LINE * _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH) * mapB.y)
-    })
-    const nb = 16
-    for (let i = 0; i < world.length; i++) {
-      const map = world[i]
-      if (map.t !== 'overworld') {
-        continue
-      }
-      const loaded = []
-      for (let j = 0; j < map.tiles.length; j++) {
-        const currentTile = map.tiles[j]
-        const key = `${map.x}_${map.y}_${currentTile.x}_${currentTile.y}`
-        if (loaded.indexOf(key) !== -1) {
-          console.log(key)
-          continue
-        }
-        const sprite = _resource__WEBPACK_IMPORTED_MODULE_6__["default"].getSprite(currentTile.s)
-        const tile = new _model_tile__WEBPACK_IMPORTED_MODULE_1__.Tile(currentTile.column, currentTile.line, currentTile.x + map.x, currentTile.y + map.y, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT, currentTile.b, sprite)
-        this.worldTiles.push(tile)
-        loaded.push(key)
-      }
-    }
-
-    this.tiles = this.worldTiles
+  importWorld (gameData) {
+    _service_world_manager__WEBPACK_IMPORTED_MODULE_8__["default"].createMaps(gameData)
     _event__WEBPACK_IMPORTED_MODULE_2__["default"].broadcast('menu:map-selector:display-world')
 
     _history__WEBPACK_IMPORTED_MODULE_4__["default"].reset()
 
     this.draw()
-  }
-
-  importWorld (data) {
-    this.level1Tiles = this.importTiles('level1', data, _constant__WEBPACK_IMPORTED_MODULE_3__.DUNGEON_MAPS_PER_LINE, _constant__WEBPACK_IMPORTED_MODULE_3__.DUNGEON_MAPS_PER_COLUMN)
-    this.cavernsTiles = this.importTiles('caverns', data, _constant__WEBPACK_IMPORTED_MODULE_3__.WORLD_MAPS_PER_LINE, _constant__WEBPACK_IMPORTED_MODULE_3__.WORLD_MAPS_PER_COLUMN)
-    this.worldTiles = this.importTiles('world', data, _constant__WEBPACK_IMPORTED_MODULE_3__.WORLD_MAPS_PER_LINE, _constant__WEBPACK_IMPORTED_MODULE_3__.WORLD_MAPS_PER_COLUMN)
-
-    this.tiles = this.worldTiles
-    _event__WEBPACK_IMPORTED_MODULE_2__["default"].broadcast('menu:map-selector:display-world')
-
-    _history__WEBPACK_IMPORTED_MODULE_4__["default"].reset()
-
-    this.draw()
-  }
-
-  importTiles (type, data, maxMapsPerLine, maxMapsPerColumn) {
-    const tiles = []
-    for (let i = 0; i < data[type].length; i++) {
-      const map = data[type][i]
-      if (map.x >= maxMapsPerLine || map.y >= maxMapsPerColumn) {
-        continue
-      }
-      const mapOffsetX = map.x * _constant__WEBPACK_IMPORTED_MODULE_3__.TILES_PER_LINE * _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH
-      const mapOffsetY = map.y * _constant__WEBPACK_IMPORTED_MODULE_3__.TILES_PER_COLUMN * _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT
-      for (let j = 0; j < map.tiles.length; j++) {
-        const currentTile = map.tiles[j]
-        const tileOffsetX = currentTile.x * _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH
-        const tileOffsetY = currentTile.y * _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT
-        const sprite = _resource__WEBPACK_IMPORTED_MODULE_6__["default"].getSprite(currentTile.sprite)
-        let desctructible
-        const transition = new _model_tile_transition__WEBPACK_IMPORTED_MODULE_7__.TileTransition(currentTile.transition?.start, currentTile.transition?.targetMapType, currentTile.transition?.targetMapColumn, currentTile.transition?.targetMapLine, currentTile.transition?.targetTileColumn, currentTile.transition?.targetTileLine, currentTile.transition?.end)
-        const tile = new _model_tile__WEBPACK_IMPORTED_MODULE_1__.Tile(currentTile.x, currentTile.y, mapOffsetX + tileOffsetX, mapOffsetY + tileOffsetY, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT, currentTile.hitbox, sprite, null, desctructible, transition, !!currentTile.start)
-        tiles.push(tile)
-      }
-    }
-
-    return tiles
   }
 
   async importEmptyWorld () {
-    const emptyWorld = await _utils_io__WEBPACK_IMPORTED_MODULE_5__["default"].fetchRemoteFile(_constant__WEBPACK_IMPORTED_MODULE_3__.PATH_DATA_EMPTY_WORLD)
-    this.importWorld(emptyWorld)
-  }
-
-  exportWorld () {
-    const world = this.exportTiles(this.worldTiles, _constant__WEBPACK_IMPORTED_MODULE_3__.WORLD_MAPS_PER_LINE, _constant__WEBPACK_IMPORTED_MODULE_3__.WORLD_MAPS_PER_COLUMN)
-    const caverns = this.exportTiles(this.cavernsTiles, _constant__WEBPACK_IMPORTED_MODULE_3__.WORLD_MAPS_PER_LINE, _constant__WEBPACK_IMPORTED_MODULE_3__.WORLD_MAPS_PER_COLUMN)
-    const level1 = this.exportTiles(this.level1Tiles, _constant__WEBPACK_IMPORTED_MODULE_3__.DUNGEON_MAPS_PER_LINE, _constant__WEBPACK_IMPORTED_MODULE_3__.DUNGEON_MAPS_PER_COLUMN)
-
-    return {
-      world,
-      caverns,
-      level1
-    }
-  }
-
-  exportTiles (tiles, maxMapsPerLine, maxMapsPerColumn) {
-    const maps = []
-    for (let x = 0; x < maxMapsPerLine; x++) {
-      for (let y = 0; y < maxMapsPerColumn; y++) {
-        maps.push({
-          x,
-          y,
-          tiles: [],
-          tunnels: [],
-          secrets: [],
-          creatures: [],
-          sprites: []
-        })
-        const map = maps.at(-1)
-        const mapOffsetX = x * _constant__WEBPACK_IMPORTED_MODULE_3__.TILES_PER_LINE * _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_WIDTH
-        const mapOffsetY = y * _constant__WEBPACK_IMPORTED_MODULE_3__.TILES_PER_COLUMN * _constant__WEBPACK_IMPORTED_MODULE_3__.TILE_HEIGHT
-        const nbTiles = _constant__WEBPACK_IMPORTED_MODULE_3__.TILES_PER_LINE * _constant__WEBPACK_IMPORTED_MODULE_3__.TILES_PER_COLUMN
-        for (let k = (maps.length - 1) * nbTiles; k < (maps.length) * nbTiles; k++) {
-          const tile = tiles[k]
-          if (!tile) {
-            return maps
-          }
-          const tileData = {}
-          tileData.x = (tile.x - mapOffsetX) / tile.width
-          tileData.y = (tile.y - mapOffsetY) / tile.height
-          tileData.hitbox = tile.hitbox
-          tileData.sprite = tile.sprite.name
-          if (!tile.tileTransition.isEmpty()) {
-            tileData.transition = {
-              start: tile.tileTransition.start,
-              targetMapType: tile.tileTransition.targetMapType,
-              targetMapColumn: tile.tileTransition.targetMapColumn,
-              targetMapLine: tile.tileTransition.targetMapLine,
-              targetTileColumn: tile.tileTransition.targetTileColumn,
-              targetTileLine: tile.tileTransition.targetTileLine,
-              end: tile.tileTransition.end
-            }
-          }
-          if (tile.start) {
-            tileData.start = true
-          }
-
-          map.tiles.push(tileData)
-        }
-      }
-    }
-
-    return maps
+    const gameData = await _utils_io__WEBPACK_IMPORTED_MODULE_5__["default"].fetchRemoteFile(_constant__WEBPACK_IMPORTED_MODULE_3__.PATH_DATA_EMPTY_WORLD)
+    _service_world_manager__WEBPACK_IMPORTED_MODULE_8__["default"].createMaps(gameData)
   }
 
   resizePanel (element, event) {
@@ -1866,6 +2025,48 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
 }
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (WorldPanel);
+
+
+/***/ }),
+
+/***/ "../assets/js/model/extra.js":
+/*!***********************************!*\
+  !*** ../assets/js/model/extra.js ***!
+  \***********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Extra: () => (/* binding */ Extra)
+/* harmony export */ });
+
+
+class Extra {
+  constructor (column, line, x, y, width, height, sprite) {
+    this.column = column
+    this.line = line
+    this.x = x
+    this.y = y
+    this.width = width
+    this.height = height
+    this.sprite = sprite
+  }
+
+  init () {
+    this.sprite.start()
+  }
+
+  reset () {
+    this.sprite.stop()
+  }
+
+  draw (context) {
+    this.sprite.draw(context, this.x, this.y, this.width, this.height)
+  }
+}
+
+
 
 
 /***/ }),
@@ -1884,7 +2085,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 class Map {
-  constructor (column, line, x, y, width, height, type, tiles, creatures, items, characters, miscs) {
+  constructor (column, line, x, y, width, height, type, tiles, extras) {
     this.column = column
     this.line = line
     this.x = x
@@ -1895,13 +2096,30 @@ class Map {
     this.height = height
     this.type = type
     this.tiles = tiles
-    this.creatures = creatures
-    this.items = items
-    this.characters = characters
-    this.miscs = miscs
+    this.extras = extras
 
     this.savedItems = []
     this.savedCharacters = []
+    this.mapPath = this.getMapPath()
+  }
+
+  getMapPath () {
+    const path = new Path2D()
+    path.rect(this.x, this.y, this.width, this.height)
+
+    return path
+  }
+
+  init () {
+    for (const extra of this.extras) {
+      extra.init()
+    }
+  }
+
+  reset () {
+    for (const extra of this.extras) {
+      extra.reset()
+    }
   }
 
   draw (context) {
@@ -1914,7 +2132,11 @@ class Map {
       tile.draw(context)
     }
 
-    for (let i = 0; i < this.miscs.length; i++) {
+    for (const extra of this.extras) {
+      extra.draw(context)
+    }
+
+    /* for (let i = 0; i < this.miscs.length; i++) {
       this.miscs[i].draw(context, tileOffsetX, tileOffsetY)
     }
 
@@ -1924,7 +2146,7 @@ class Map {
 
     for (let i = 0; i < this.characters.length; i++) {
       this.characters[i].draw(context, tileOffsetX, tileOffsetY)
-    }
+    } */
     context.translate(-this.offsetX, -this.offsetY)
     context.restore()
   }
@@ -1945,24 +2167,6 @@ class Map {
     for (let column = 0; column < this.tiles.length; column++) {
       for (let line = 0; line < this.tiles[column].length; line++) {
         yield this.tiles[column][line]
-      }
-    }
-  }
-
-  init () {
-
-  }
-
-  reset () {
-    for (let i = 0; i < this.items.length; i++) {
-      if (this.items[i].resetable === true) {
-        this.items[i].reset()
-      }
-    }
-
-    for (let i = 0; i < this.characters.length; i++) {
-      if (this.characters[i].resetable === true) {
-        this.characters[i].reset()
       }
     }
   }
@@ -2231,6 +2435,9 @@ class Tile {
     const tileOffsetY = offsetY !== undefined ? this.y + offsetY : this.y
 
     this.sprite.draw(context, tileOffsetX, tileOffsetY, this.width, this.height)
+    if (this.other) {
+      this.other.draw(context, tileOffsetX, tileOffsetY, this.width, this.height)
+    }
   }
 
   getTilePath () {
@@ -2794,9 +3001,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _resource__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../resource */ "../assets/js/resource.js");
 /* harmony import */ var _hitbox_manager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./hitbox-manager */ "../assets/js/service/hitbox-manager.js");
 /* harmony import */ var _model_tile_transition__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../model/tile-transition */ "../assets/js/model/tile-transition.js");
+/* harmony import */ var _model_extra__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../model/extra */ "../assets/js/model/extra.js");
 
 
 ;
+
 
 
 
@@ -2836,7 +3045,18 @@ __webpack_require__.r(__webpack_exports__);
       if (!maps[column]) {
         maps[column] = []
       }
-      maps[column][line] = new _model_map__WEBPACK_IMPORTED_MODULE_1__.Map(column, line, x, y, width, height, type, tiles, [/* creatures */], [/* items */], [/* characters */], [/* miscs */])
+      const extras = []
+      for (const extraData of mapData.extras) {
+        const extraColumn = extraData.x
+        const extraLine = extraData.y
+        const extraWidth = _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH
+        const extraHeight = _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT
+        const extraX = x + extraColumn * extraWidth
+        const extraY = y + extraLine * extraHeight
+        const extraSprite = _resource__WEBPACK_IMPORTED_MODULE_3__["default"].getSprite(extraData.sprite)
+        extras.push(new _model_extra__WEBPACK_IMPORTED_MODULE_6__.Extra(extraColumn, extraLine, extraX, extraY, extraWidth, extraHeight, extraSprite))
+      }
+      maps[column][line] = new _model_map__WEBPACK_IMPORTED_MODULE_1__.Map(column, line, x, y, width, height, type, tiles, extras)
     }
 
     return maps
@@ -2888,6 +3108,58 @@ __webpack_require__.r(__webpack_exports__);
         yield this[type][column][line]
       }
     }
+  },
+
+  exportGame () {
+    const world = this.exportMaps(_constant__WEBPACK_IMPORTED_MODULE_0__.MAP_TYPE_WORLD)
+    const caverns = this.exportMaps(_constant__WEBPACK_IMPORTED_MODULE_0__.MAP_TYPE_CAVERNS)
+    const level1 = this.exportMaps(_constant__WEBPACK_IMPORTED_MODULE_0__.MAP_TYPE_LEVEL1)
+
+    return { world, caverns, level1 }
+  },
+
+  exportMaps (type) {
+    const mapsData = []
+    for (const map of this.mapsIterator(type)) {
+      const mapData = {
+        x: map.column,
+        y: map.line,
+        tiles: [],
+        extras: []
+      }
+      for (const extra of map.extras) {
+        mapData.extras.push({
+          x: extra.column,
+          y: extra.line,
+          sprite: extra.sprite.name
+        })
+      }
+      for (const tile of map.tilesIterator()) {
+        const tileData = {
+          x: tile.column,
+          y: tile.line,
+          hitbox: tile.hitbox,
+          sprite: tile.sprite.name
+        }
+        if (!tile.tileTransition.isEmpty()) {
+          tileData.transition = {
+            start: tile.tileTransition.start,
+            targetMapType: tile.tileTransition.targetMapType,
+            targetMapColumn: tile.tileTransition.targetMapColumn,
+            targetMapLine: tile.tileTransition.targetMapLine,
+            targetTileColumn: tile.tileTransition.targetTileColumn,
+            targetTileLine: tile.tileTransition.targetTileLine,
+            end: tile.tileTransition.end
+          }
+        }
+        if (tile.start) {
+          tileData.start = true
+        }
+        mapData.tiles.push(tileData)
+      }
+      mapsData.push(mapData)
+    }
+    return mapsData
   }
 });
 
@@ -4901,19 +5173,21 @@ var __webpack_exports__ = {};
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var Panel_tile_selector__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! Panel/tile-selector */ "../assets/js/editor/panel/tile-selector.js");
 /* harmony import */ var _panel_tile_panel__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./panel/tile-panel */ "../assets/js/editor/panel/tile-panel.js");
-/* harmony import */ var Panel_world__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! Panel/world */ "../assets/js/editor/panel/world.js");
-/* harmony import */ var _panel_map_selector_menu__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./panel/map-selector-menu */ "../assets/js/editor/panel/map-selector-menu.js");
-/* harmony import */ var _panel_general_menu__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./panel/general-menu */ "../assets/js/editor/panel/general-menu.js");
-/* harmony import */ var _panel_tool_descriptor__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./panel/tool-descriptor */ "../assets/js/editor/panel/tool-descriptor.js");
-/* harmony import */ var Interact__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! Interact */ "../node_modules/interactjs/dist/interact.min.js");
-/* harmony import */ var Interact__WEBPACK_IMPORTED_MODULE_10___default = /*#__PURE__*/__webpack_require__.n(Interact__WEBPACK_IMPORTED_MODULE_10__);
-/* harmony import */ var _history__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./history */ "../assets/js/editor/history.js");
-/* harmony import */ var _keys__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./keys */ "../assets/js/editor/keys.js");
-/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../constant */ "../assets/js/constant.js");
-/* harmony import */ var _resource__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../resource */ "../assets/js/resource.js");
+/* harmony import */ var _panel_map_panel__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./panel/map-panel */ "../assets/js/editor/panel/map-panel.js");
+/* harmony import */ var Panel_world__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! Panel/world */ "../assets/js/editor/panel/world.js");
+/* harmony import */ var _panel_map_selector_menu__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./panel/map-selector-menu */ "../assets/js/editor/panel/map-selector-menu.js");
+/* harmony import */ var _panel_general_menu__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./panel/general-menu */ "../assets/js/editor/panel/general-menu.js");
+/* harmony import */ var _panel_tool_descriptor__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./panel/tool-descriptor */ "../assets/js/editor/panel/tool-descriptor.js");
+/* harmony import */ var Interact__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! Interact */ "../node_modules/interactjs/dist/interact.min.js");
+/* harmony import */ var Interact__WEBPACK_IMPORTED_MODULE_11___default = /*#__PURE__*/__webpack_require__.n(Interact__WEBPACK_IMPORTED_MODULE_11__);
+/* harmony import */ var _history__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./history */ "../assets/js/editor/history.js");
+/* harmony import */ var _keys__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./keys */ "../assets/js/editor/keys.js");
+/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../constant */ "../assets/js/constant.js");
+/* harmony import */ var _resource__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../resource */ "../assets/js/resource.js");
 
 
 ;
+
 
 
 
@@ -4951,36 +5225,27 @@ function dropdown () {
 }
 
 async function loadEditor () {
-  await _resource__WEBPACK_IMPORTED_MODULE_9__["default"].loadSprites()
+  await _resource__WEBPACK_IMPORTED_MODULE_10__["default"].loadSprites()
 
-  const panelsContainer = Interact__WEBPACK_IMPORTED_MODULE_10___default()('#panels-container')
+  const panelsContainer = Interact__WEBPACK_IMPORTED_MODULE_11___default()('#panels-container')
 
   const tileSelectorPanel = new Panel_tile_selector__WEBPACK_IMPORTED_MODULE_0__["default"](
     document.querySelector('#tile-selector-panel'),
-    document.querySelector('#panels-container .panel-body'),
-    100,
-    100,
-    352,
-    436
+    document.querySelector('#panels-container .panel-body')
   )
-  await tileSelectorPanel.loadTiles()
-  tileSelectorPanel.start()
-  tileSelectorPanel.draw()
 
   const tilePanel = new _panel_tile_panel__WEBPACK_IMPORTED_MODULE_1__.TilePanel(
     document.querySelector('#tile-panel'),
-    document.querySelector('#panels-container .panel-body'),
-    100,
-    100,
-    352,
-    450
+    document.querySelector('#panels-container .panel-body')
   )
-  tilePanel.start()
-  tilePanel.draw()
 
-  const toolDescriptor = new _panel_tool_descriptor__WEBPACK_IMPORTED_MODULE_5__["default"](document.querySelector('.tool-descriptor'))
-  const generalMenu = new _panel_general_menu__WEBPACK_IMPORTED_MODULE_4__["default"](
-    document.querySelector('[href="#importOldWorld (JSON)"]'),
+  const mapPanel = new _panel_map_panel__WEBPACK_IMPORTED_MODULE_2__.MapPanel(
+    document.querySelector('#map-panel'),
+    document.querySelector('#panels-container .panel-body')
+  )
+
+  const toolDescriptor = new _panel_tool_descriptor__WEBPACK_IMPORTED_MODULE_6__["default"](document.querySelector('.tool-descriptor'))
+  const generalMenu = new _panel_general_menu__WEBPACK_IMPORTED_MODULE_5__["default"](
     document.querySelector('[href="#importWorld (JSON)"]'),
     document.querySelector('[href="#importDefaultWorld (LOZ)"]'),
     document.querySelector('[href="#importWorld (LOZ)"]'),
@@ -4988,7 +5253,7 @@ async function loadEditor () {
     document.querySelector('[href="#exportWorld (LOZ)"]'),
     document.querySelector('[href="#toggleBlock"]')
   )
-  const mapSelectorMenu = new _panel_map_selector_menu__WEBPACK_IMPORTED_MODULE_3__["default"](
+  const mapSelectorMenu = new _panel_map_selector_menu__WEBPACK_IMPORTED_MODULE_4__["default"](
     document.querySelector('[href="#displayWorld"]'),
     document.querySelector('[href="#displayCaverns"]'),
     document.querySelector('[href="#displayLevel1"]'),
@@ -5001,16 +5266,13 @@ async function loadEditor () {
     document.querySelector('[href="#displayLevel8"]'),
     document.querySelector('[href="#displayLevel9"]')
   )
-  const worldPanel = new Panel_world__WEBPACK_IMPORTED_MODULE_2__["default"](
+  const worldPanel = new Panel_world__WEBPACK_IMPORTED_MODULE_3__["default"](
     document.querySelector('#world-panel'),
     document.querySelector('#panels-container .panel-body')
   )
-  worldPanel.start()
-  await worldPanel.importEmptyWorld()
-  worldPanel.draw()
 
-  const keys = new _keys__WEBPACK_IMPORTED_MODULE_7__["default"]()
-  _history__WEBPACK_IMPORTED_MODULE_6__["default"].start()
+  const keys = new _keys__WEBPACK_IMPORTED_MODULE_8__["default"]()
+  _history__WEBPACK_IMPORTED_MODULE_7__["default"].start()
 
   dropdown()
 }

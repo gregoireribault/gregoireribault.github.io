@@ -212,6 +212,9 @@ ___CSS_LOADER_EXPORT___.push([module.id, `@use "sass:meta";
 .border-grey-1 {
   border: 1px solid grey; }
 
+.b-white {
+  background-color: #fff; }
+
 .d-flex {
   display: flex; }
 
@@ -227,31 +230,39 @@ ___CSS_LOADER_EXPORT___.push([module.id, `@use "sass:meta";
 .link {
   color: inherit; }
 
-:root {
-  --panel-header-height: 20px; }
-
 html, body {
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
   background-color: #000;
-  overflow: hidden; }
+  overflow: hidden;
+  user-select: none; }
+
+canvas {
+  border: none; }
 
 #panels-container {
   width: 100%;
-  height: 100%;
-  counter-reset: total; }
+  height: 100%; }
 
 #tile-selector-panel {
-  top: 0;
+  top: 0px;
+  left: 0px;
+  width: 192px;
+  height: 800px; }
+
+#map-panel {
+  top: 0px;
+  left: calc(192px + calc(100% - 192px - 352px - 2px));
   width: 352px;
-  height: 436px; }
+  height: 380px; }
 
 #tile-panel {
-  top: 437px;
+  top: 380px;
+  left: calc(192px + calc(100% - 192px - 352px - 2px) + 1px);
   width: 352px;
-  height: 350px; }
+  height: calc(800px - 380px); }
   #tile-panel .panel-body .tile-block-details {
     position: relative;
     width: 60px;
@@ -289,23 +300,26 @@ html, body {
       #tile-panel .panel-body .tile-block-details input[name\$="7"] {
         left: 0;
         top: calc(50% - 14px/2); }
-  #tile-panel .panel-body label {
-    font-size: 0.8em; }
-  #tile-panel .panel-body input[type="number"] {
-    width: 70px; }
-  #tile-panel .panel-body select {
-    width: 80px; }
   #tile-panel .panel-body .transition-caption {
     text-align: center; }
 
 #world-panel {
-  top: 0;
-  left: 352px;
-  width: calc(100% - 352px);
-  height: 744px; }
+  top: 0px;
+  left: 192px;
+  width: calc(100% - 192px - 352px - 2px);
+  height: 800px; }
 
 .panel-body {
   position: relative; }
+  .panel-body label {
+    font-size: 0.8em; }
+  .panel-body input[type="number"] {
+    width: 70px; }
+  .panel-body select {
+    width: 80px; }
+  .panel-body .list {
+    height: 115px;
+    overflow: auto; }
 
 .hidden {
   display: none !important; }
@@ -332,7 +346,7 @@ html, body {
   position: absolute;
   width: 280px;
   height: 200px;
-  background-color: #fff;
+  background-color: #000;
   border: 1px solid #aaa; }
   .panel .panel-header {
     position: relative;
@@ -342,8 +356,6 @@ html, body {
       height: 100%;
       margin: 0;
       font-size: 0.9em; }
-  .panel canvas {
-    border: none; }
   .panel .menu {
     float: right; }
 
@@ -387,7 +399,7 @@ html, body {
       background-color: #ddd; }
   .dropdown .dropdown-content.show {
     display: block; }
-`, "",{"version":3,"sources":["webpack://./../assets/css/design-system.scss","webpack://./../assets/css/editor.scss"],"names":[],"mappings":"AAAA,gBAAI;AAKA;EAAgB,YAAQ,EAAA;;AAMxB;EAAgB,eAAY,EAAA;;AAC5B;EAAgB,kBAAe,EAAA;;AAC/B;EAAgB,gBAAa,EAAA;;AAC7B;EAAgB,iBAAc,EAAA;;AAC9B;EAAgB,gBAAa;EAAa,iBAAc,EAAA;;AACxD;EAAgB,eAAY;EAAa,kBAAe,EAAA;;AACxD;EAAe,WAAQ,EAAA;;AACvB;EAAgB,gBAAa,EAAA;;AAC7B;EAAgB,mBAAgB,EAAA;;AAChC;EAAgB,iBAAc,EAAA;;AAC9B;EAAgB,kBAAe,EAAA;;AAC/B;EAAgB,iBAAc;EAAa,kBAAe,EAAA;;AAC1D;EAAgB,gBAAa;EAAa,mBAAgB,EAAA;;AAC1D;EAAe,YAAS,EAAA;;AAbxB;EAAgB,gBAAY,EAAA;;AAC5B;EAAgB,mBAAe,EAAA;;AAC/B;EAAgB,iBAAa,EAAA;;AAC7B;EAAgB,kBAAc,EAAA;;AAC9B;EAAgB,iBAAa;EAAa,kBAAc,EAAA;;AACxD;EAAgB,gBAAY;EAAa,mBAAe,EAAA;;AACxD;EAAe,YAAQ,EAAA;;AACvB;EAAgB,iBAAa,EAAA;;AAC7B;EAAgB,oBAAgB,EAAA;;AAChC;EAAgB,kBAAc,EAAA;;AAC9B;EAAgB,mBAAe,EAAA;;AAC/B;EAAgB,kBAAc;EAAa,mBAAe,EAAA;;AAC1D;EAAgB,iBAAa;EAAa,oBAAgB,EAAA;;AAC1D;EAAe,aAAS,EAAA;;AAbxB;EAAgB,gBAAY,EAAA;;AAC5B;EAAgB,mBAAe,EAAA;;AAC/B;EAAgB,iBAAa,EAAA;;AAC7B;EAAgB,kBAAc,EAAA;;AAC9B;EAAgB,iBAAa;EAAa,kBAAc,EAAA;;AACxD;EAAgB,gBAAY;EAAa,mBAAe,EAAA;;AACxD;EAAe,YAAQ,EAAA;;AACvB;EAAgB,iBAAa,EAAA;;AAC7B;EAAgB,oBAAgB,EAAA;;AAChC;EAAgB,kBAAc,EAAA;;AAC9B;EAAgB,mBAAe,EAAA;;AAC/B;EAAgB,kBAAc;EAAa,mBAAe,EAAA;;AAC1D;EAAgB,iBAAa;EAAa,oBAAgB,EAAA;;AAC1D;EAAe,aAAS,EAAA;;AAbxB;EAAgB,gBAAY,EAAA;;AAC5B;EAAgB,mBAAe,EAAA;;AAC/B;EAAgB,iBAAa,EAAA;;AAC7B;EAAgB,kBAAc,EAAA;;AAC9B;EAAgB,iBAAa;EAAa,kBAAc,EAAA;;AACxD;EAAgB,gBAAY;EAAa,mBAAe,EAAA;;AACxD;EAAe,YAAQ,EAAA;;AACvB;EAAgB,iBAAa,EAAA;;AAC7B;EAAgB,oBAAgB,EAAA;;AAChC;EAAgB,kBAAc,EAAA;;AAC9B;EAAgB,mBAAe,EAAA;;AAC/B;EAAgB,kBAAc;EAAa,mBAAe,EAAA;;AAC1D;EAAgB,iBAAa;EAAa,oBAAgB,EAAA;;AAC1D;EAAe,aAAS,EAAA;;AAI5B;EACI,sBAAsB,EAAA;;AAI1B;EACI,aAAa,EAAA;;AAEjB;EACI,mBAAmB,EAAA;;AAEvB;EACI,sBAAsB,EAAA;;AAE1B;EACI,YAAY,EAAA;;AAGhB;EACE,cAAc,EAAA;;ACzChB;EACI,2BAAsB,EAAA;;AAG1B;EACI,WAAW;EACX,YAAY;EACZ,SAAS;EACT,UAAU;EACV,sBAAsB;EACtB,gBAAgB,EAAA;;AAGpB;EACI,WAAW;EACX,YAAY;EACZ,oBAAoB,EAAA;;AAGxB;EACI,MAAM;EACN,YAAY;EACZ,aAAa,EAAA;;AAGjB;EACI,UAAU;EACV,YAAY;EACZ,aAAa,EAAA;EAHjB;IAMY,kBAAkB;IAClB,WAAW;IACX,YAAY;IACZ,aAAa;IACb,mBAAmB;IACnB,uBAAuB;IACvB,YAAY,EAAA;IAZxB;MAcgB,kBAAkB;MAClB,WA3CE;MA4CF,YA3CG;MA4CH,SAAS,EAAA;MAjBzB;QAkB+B,OAAO;QAAE,MAAM,EAAA;MAlB9C;QAmB+B,wBAAmC;QAAE,MAAM,EAAA;MAnB1E;QAoB+B,uBAAkC;QAAE,MAAM,EAAA;MApBzE;QAqB+B,uBAAkC;QAAE,uBAAmC,EAAA;MArBtG;QAsB+B,uBAAkC;QAAE,sBAAkC,EAAA;MAtBrG;QAuB+B,wBAAmC;QAAE,sBAAkC,EAAA;MAvBtG;QAwB+B,OAAO;QAAE,sBAAkC,EAAA;MAxB1E;QAyB+B,OAAO;QAAE,uBAAmC,EAAA;EAzB3E;IA6BY,gBAAgB,EAAA;EA7B5B;IAgCY,WAAW,EAAA;EAhCvB;IAmCY,WAAW,EAAA;EAnCvB;IAsCY,kBAAkB,EAAA;;AAK9B;EACI,MAAM;EACN,WAAW;EACX,yBAAyB;EACzB,aAAa,EAAA;;AAGjB;EACI,kBAAkB,EAAA;;AAGtB;EACI,wBAAwB,EAAA;;AAE5B;EACI,YAAY;EACZ,YAAY,EAAA;EAFhB;IAIQ,aAAc;IACd,mBAAoB;IACpB,YAAY,EAAA;IANpB;MAQY,iBAAiB,EAAA;IAR7B;MAWY,kBAAkB;MAClB,WAAW;MACX,YAAY;MACZ,qBAAqB,EAAA;;AAKjC;EACI,yBAAyB,EAAA;;AAG7B;EACI,kBAAkB;EAClB,YAAY;EACZ,aAAa;EACb,sBAAsB;EACtB,sBAAsB,EAAA;EAL1B;IAQQ,kBAAkB;IAClB,YAAY;IACZ,sBAAsB,EAAA;IAV9B;MAaY,YAAY;MACZ,SAAS;MACT,gBAAgB,EAAA;EAf5B;IAoBQ,YAAY,EAAA;EApBpB;IAwBQ,YAAY,EAAA;;AAIpB;EAEQ,cAAc;EACd,YAAY;EACZ,eAAe;EACf,iBAAiB,EAAA;;AALzB;EAQQ,WAAW;EACX,kBAAkB;EAClB,iBAAiB,EAAA;EAVzB;IAaY,WAAW;IACX,cAAc;IACd,QAAQ;IACR,SAAS;IACT,kCAAkC;IAClC,mCAAmC;IACnC,2BAA2B;IAC3B,2BAA2B,EAAA;;AApBvC;EAwBQ,gBAAgB,EAAA;;AAxBxB;EA2BQ,aAAa;EACb,kBAAkB;EAClB,yBAAyB;EACzB,gBAAgB;EAChB,+CAA4C;EAC5C,UAAU;EACV,QAAQ,EAAA;EAjChB;IAoCY,YAAY;IACZ,YAAY;IACZ,qBAAqB;IACrB,cAAc,EAAA;IAvC1B;MA0CgB,sBAAsB,EAAA;EA1CtC;IA+CY,cAAa,EAAA","sourcesContent":["@use \"sass:meta\";\n\n// Heights\n$heights: 20;\n@each $height in $heights {\n    .h-#{$height} { height: #{$height}px; }\n}\n\n// Margins/paddings\n$values: 4, 10, 16, 20;\n@each $value in $values {\n    .mt-#{$value} { margin-top: #{$value}px; }\n    .mb-#{$value} { margin-bottom: #{$value}px; }\n    .ml-#{$value} { margin-left: #{$value}px; }\n    .mr-#{$value} { margin-right: #{$value}px; }\n    .mh-#{$value} { margin-left: #{$value}px; margin-right: #{$value}px; }\n    .mv-#{$value} { margin-top: #{$value}px; margin-bottom: #{$value}px; }\n    .m-#{$value} { margin: #{$value}px; }\n    .pt-#{$value} { padding-top: #{$value}px; }\n    .pb-#{$value} { padding-bottom: #{$value}px; }\n    .pl-#{$value} { padding-left: #{$value}px; }\n    .pr-#{$value} { padding-right: #{$value}px; }\n    .ph-#{$value} { padding-left: #{$value}px; padding-right: #{$value}px; }\n    .pv-#{$value} { padding-top: #{$value}px; padding-bottom: #{$value}px; }\n    .p-#{$value} { padding: #{$value}px; }\n}\n\n// Borders\n.border-grey-1 {\n    border: 1px solid grey;\n}\n\n// Flex\n.d-flex {\n    display: flex;\n}\n.fx-row {\n    flex-direction: row;\n}\n.fx-column {\n    flex-direction: column;\n}\n.fx-grow {\n    flex-grow: 1;\n}\n\n.link {\n  color: inherit;\n}\n","@import 'design-system';\n\n$panel-header-height: 20px;\n$hitboxWidth: 14px;\n$hitboxHeight: 14px;\n\n:root {\n    --panel-header-height: 20px;\n}\n\nhtml, body {\n    width: 100%;\n    height: 100%;\n    margin: 0;\n    padding: 0;\n    background-color: #000;\n    overflow: hidden;\n}\n\n#panels-container {\n    width: 100%;\n    height: 100%;\n    counter-reset: total;\n}\n\n#tile-selector-panel {\n    top: 0;\n    width: 352px;\n    height: 436px;\n}\n\n#tile-panel {\n    top: 437px;\n    width: 352px;\n    height: 350px;\n    .panel-body {\n        .tile-block-details {\n            position: relative;\n            width: 60px;\n            height: 60px;\n            display: flex;\n            align-items: center;\n            justify-content: center;\n            margin: auto;\n            input {\n                position: absolute;\n                width: $hitboxWidth;\n                height: $hitboxHeight;\n                margin: 0;\n                &[name$=\"0\"] { left: 0; top: 0; }\n                &[name$=\"1\"] { left: calc(50% - #{$hitboxWidth}/2); top: 0; }\n                &[name$=\"2\"] { left: calc(100% - #{$hitboxWidth}); top: 0; }\n                &[name$=\"3\"] { left: calc(100% - #{$hitboxWidth}); top: calc(50% - #{$hitboxHeight}/2); }\n                &[name$=\"4\"] { left: calc(100% - #{$hitboxWidth}); top: calc(100% - #{$hitboxHeight}); }\n                &[name$=\"5\"] { left: calc(50% - #{$hitboxWidth}/2); top: calc(100% - #{$hitboxHeight}); }\n                &[name$=\"6\"] { left: 0; top: calc(100% - #{$hitboxHeight}); }\n                &[name$=\"7\"] { left: 0; top: calc(50% - #{$hitboxHeight}/2); }\n            }\n        }\n        label {\n            font-size: 0.8em;\n        }\n        input[type=\"number\"] {\n            width: 70px;\n        }\n        select {\n            width: 80px;\n        }\n        .transition-caption {\n            text-align: center;\n        }\n    }\n}\n\n#world-panel {\n    top: 0;\n    left: 352px;\n    width: calc(100% - 352px);\n    height: 744px;\n}\n\n.panel-body {\n    position: relative;\n}\n\n.hidden {\n    display: none !important;\n}\n.tool-descriptor {\n    float: right;\n    height: 20px;\n    .selected-tile {\n        display : flex;\n        align-items : center;\n        height: 100%;\n        &>span {\n            margin-right: 4px;\n        }\n        .selected-tile-sprite {\n            position: relative;\n            width: 16px;\n            height: 16px;\n            display: inline-block;\n        }\n    }\n}\n\n#panels-container .panel-body {\n    height: calc(100% - 20px);\n}\n\n.panel {\n    position: absolute;\n    width: 280px;\n    height: 200px;\n    background-color: #fff;\n    border: 1px solid #aaa;\n\n    .panel-header {\n        position: relative;\n        height: 20px;\n        background-color: #adf;\n\n        h2 {\n            height: 100%;\n            margin: 0;\n            font-size: 0.9em;\n        }\n    }\n\n    canvas {\n        border: none;\n    }\n    \n    .menu {\n        float: right;\n    }\n}\n\n.dropdown {\n    &>a.caption {\n        display: block;\n        height: 20px;\n        cursor: pointer;\n        margin-left: 20px;\n    }\n    &>a.caption.empty {\n        width: 20px;\n        color: transparent;\n        user-select: none;\n\n        &:before {\n            content: '';\n            display: block;\n            width: 0; \n            height: 0; \n            border-left: 5px solid transparent;\n            border-right: 5px solid transparent;\n            border-top: 5px solid black;\n            transform: translateY(100%);\n        }\n    }\n    &>a.caption:not(.empty) {\n        background: #fff;\n    }\n    .dropdown-content {\n        display: none;\n        position: absolute;\n        background-color: #f1f1f1;\n        min-width: 160px;\n        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);\n        z-index: 1;\n        right: 0;\n    \n        a {\n            color: black;\n            padding: 4px;\n            text-decoration: none;\n            display: block;\n    \n            &:hover {\n                background-color: #ddd;\n            }\n        }\n    \n        &.show {\n            display:block;\n        }\n    }\n}\n"],"sourceRoot":""}]);
+`, "",{"version":3,"sources":["webpack://./../assets/css/design-system.scss","webpack://./../assets/css/editor.scss"],"names":[],"mappings":"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","sourcesContent":["@use \"sass:meta\";\n\n// Heights\n$heights: 20;\n@each $height in $heights {\n    .h-#{$height} { height: #{$height}px; }\n}\n\n// Margins/paddings\n$values: 4, 10, 16, 20;\n@each $value in $values {\n    .mt-#{$value} { margin-top: #{$value}px; }\n    .mb-#{$value} { margin-bottom: #{$value}px; }\n    .ml-#{$value} { margin-left: #{$value}px; }\n    .mr-#{$value} { margin-right: #{$value}px; }\n    .mh-#{$value} { margin-left: #{$value}px; margin-right: #{$value}px; }\n    .mv-#{$value} { margin-top: #{$value}px; margin-bottom: #{$value}px; }\n    .m-#{$value} { margin: #{$value}px; }\n    .pt-#{$value} { padding-top: #{$value}px; }\n    .pb-#{$value} { padding-bottom: #{$value}px; }\n    .pl-#{$value} { padding-left: #{$value}px; }\n    .pr-#{$value} { padding-right: #{$value}px; }\n    .ph-#{$value} { padding-left: #{$value}px; padding-right: #{$value}px; }\n    .pv-#{$value} { padding-top: #{$value}px; padding-bottom: #{$value}px; }\n    .p-#{$value} { padding: #{$value}px; }\n}\n\n// Borders\n.border-grey-1 {\n    border: 1px solid grey;\n}\n\n// Backgrounds\n.b-white {\n    background-color: #fff;\n}\n\n// Flex\n.d-flex {\n    display: flex;\n}\n.fx-row {\n    flex-direction: row;\n}\n.fx-column {\n    flex-direction: column;\n}\n.fx-grow {\n    flex-grow: 1;\n}\n\n.link {\n  color: inherit;\n}\n","@import 'design-system';\n\n$panelHeaderHeight: 20px;\n$hitboxWidth: 14px;\n$hitboxHeight: 14px;\n\n$panelBorder: 1px;\n\n$height: 800px;\n//$height: 100%;\n\n$tileSelectorPanelWidth: 192px;\n$tileSelectorPanelHeight: $height;\n$mapPanelWidth: 352px;\n$mapPanelHeight: 380px;\n$tilePanelWidth: $mapPanelWidth;\n$tilePanelHeight: calc(#{$height} - #{$mapPanelHeight});\n$worldPanelWidth: calc(100% - #{$tileSelectorPanelWidth} - #{$mapPanelWidth} - #{$panelBorder* 2});\n$worldPanelHeight: $height;\n\n$tileSelectorPanelTop: 0px;\n$tileSelectorPanelLeft: 0px;\n$mapPanelTop: 0px;\n$mapPanelLeft: calc(#{$tileSelectorPanelWidth} + #{$worldPanelWidth});\n$tilePanelTop: $mapPanelHeight;\n$tilePanelLeft: calc(#{$tileSelectorPanelWidth} + #{$worldPanelWidth} + #{$panelBorder});\n$worldPanelTop: 0px;\n$worldPanelLeft: $tileSelectorPanelWidth;\n\nhtml, body {\n    width: 100%;\n    height: 100%;\n    margin: 0;\n    padding: 0;\n    background-color: #000;\n    overflow: hidden;\n    user-select: none;\n}\n\ncanvas {\n    border: none;\n}\n\n#panels-container {\n    width: 100%;\n    height: 100%;\n}\n\n#tile-selector-panel {\n    top: $tileSelectorPanelTop;\n    left: $tileSelectorPanelLeft;\n    width: $tileSelectorPanelWidth;\n    height: $tileSelectorPanelHeight;\n}\n\n#map-panel {\n    top: $mapPanelTop;\n    left: $mapPanelLeft;\n    width: $mapPanelWidth;\n    height: $mapPanelHeight;\n}\n\n#tile-panel {\n    top: $tilePanelTop;\n    left: $tilePanelLeft;\n    width: $tilePanelWidth;\n    height: $tilePanelHeight;\n    .panel-body {\n        .tile-block-details {\n            position: relative;\n            width: 60px;\n            height: 60px;\n            display: flex;\n            align-items: center;\n            justify-content: center;\n            margin: auto;\n            input {\n                position: absolute;\n                width: $hitboxWidth;\n                height: $hitboxHeight;\n                margin: 0;\n                &[name$=\"0\"] { left: 0; top: 0; }\n                &[name$=\"1\"] { left: calc(50% - #{$hitboxWidth}/2); top: 0; }\n                &[name$=\"2\"] { left: calc(100% - #{$hitboxWidth}); top: 0; }\n                &[name$=\"3\"] { left: calc(100% - #{$hitboxWidth}); top: calc(50% - #{$hitboxHeight}/2); }\n                &[name$=\"4\"] { left: calc(100% - #{$hitboxWidth}); top: calc(100% - #{$hitboxHeight}); }\n                &[name$=\"5\"] { left: calc(50% - #{$hitboxWidth}/2); top: calc(100% - #{$hitboxHeight}); }\n                &[name$=\"6\"] { left: 0; top: calc(100% - #{$hitboxHeight}); }\n                &[name$=\"7\"] { left: 0; top: calc(50% - #{$hitboxHeight}/2); }\n            }\n        }\n        .transition-caption {\n            text-align: center;\n        }\n    }\n}\n\n#world-panel {\n    top: $worldPanelTop;\n    left: $worldPanelLeft;\n    width: $worldPanelWidth;\n    height: $worldPanelHeight;\n}\n\n.panel-body {\n    position: relative;\n    label {\n        font-size: 0.8em;\n    }\n    input[type=\"number\"] {\n        width: 70px;\n    }\n    select {\n        width: 80px;\n    }\n    .list {\n      height: 115px;\n      overflow: auto;\n    }\n}\n\n.hidden {\n    display: none !important;\n}\n.tool-descriptor {\n    float: right;\n    height: 20px;\n    .selected-tile {\n        display : flex;\n        align-items : center;\n        height: 100%;\n        &>span {\n            margin-right: 4px;\n        }\n        .selected-tile-sprite {\n            position: relative;\n            width: 16px;\n            height: 16px;\n            display: inline-block;\n        }\n    }\n}\n\n#panels-container .panel-body {\n    height: calc(100% - #{$panelHeaderHeight});\n}\n\n.panel {\n    position: absolute;\n    width: 280px;\n    height: 200px;\n    background-color: #000;\n    border: $panelBorder solid #aaa;\n\n    .panel-header {\n        position: relative;\n        height: $panelHeaderHeight;\n        background-color: #adf;\n\n        h2 {\n            height: 100%;\n            margin: 0;\n            font-size: 0.9em;\n        }\n    }\n    \n    .menu {\n        float: right;\n    }\n}\n\n.dropdown {\n    &>a.caption {\n        display: block;\n        height: 20px;\n        cursor: pointer;\n        margin-left: 20px;\n    }\n    &>a.caption.empty {\n        width: 20px;\n        color: transparent;\n        user-select: none;\n\n        &:before {\n            content: '';\n            display: block;\n            width: 0; \n            height: 0; \n            border-left: 5px solid transparent;\n            border-right: 5px solid transparent;\n            border-top: 5px solid black;\n            transform: translateY(100%);\n        }\n    }\n    &>a.caption:not(.empty) {\n        background: #fff;\n    }\n    .dropdown-content {\n        display: none;\n        position: absolute;\n        background-color: #f1f1f1;\n        min-width: 160px;\n        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);\n        z-index: 1;\n        right: 0;\n    \n        a {\n            color: black;\n            padding: 4px;\n            text-decoration: none;\n            display: block;\n    \n            &:hover {\n                background-color: #ddd;\n            }\n        }\n    \n        &.show {\n            display:block;\n        }\n    }\n}\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 

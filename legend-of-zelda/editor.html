@@ -23,7 +23,6 @@
                 <div class="menu dropdown">
                     <a class="caption empty"></a>
                     <div class="dropdown-content">
-                        <a href="#importOldWorld (JSON)" style="display: none;">Import old world (JSON)</a>
                         <a href="#importWorld (JSON)" style="display: none;">Import world (JSON)</a>
                         <a href="#importDefaultWorld (LOZ)">Import default game</a>
                         <a href="#importWorld (LOZ)">Import game</a>
@@ -67,12 +66,69 @@
                         <canvas width="0" height="0"></canvas>
                     </div>
                 </div>
+                <div id="map-panel" class="panel">
+                    <div class="panel-header draggable">
+                        <h2>Selected Map</h2>
+                    </div>
+                    <div class="panel-body hidden">
+                        <canvas class="mv-4" width="0" height="0"></canvas>
+                        <div class="d-flex fx-column m-4 p-4 border-grey-1 b-white section">
+                          <div class="h-20">Character <input type="checkbox" name="character-enabled" data-target="character-section"></div>
+                          <div id="character-section" class="d-flex fx-row hidden">
+                            Work in progress
+                          </div>
+                        </div>
+                        <div class="d-flex fx-column m-4 p-4 border-grey-1 b-white section">
+                          <div class="h-20">Item <input type="checkbox" name="item-enabled" data-target="item-section"></div>
+                          <div id="item-section" class="d-flex fx-row hidden">
+                            Work in progress
+                          </div>
+                        </div>
+                        <div class="d-flex fx-column m-4 p-4 border-grey-1 b-white section">
+                          <div class="h-20">Extra <button id="add-extra">Add</button></div>
+                          <div id="extra-list" class="list">
+                            <div class="d-flex fx-row extra-section">
+                              <div class="fx-grow">
+                                <div class="d-flex fx-column">
+                                  <label for="extra-select">Sprite</label>
+                                  <select name="extra-select">
+                                      <option value=""></option>
+                                      <option value="misc_bomb_blow">misc_bomb_blow</option>
+                                      <option value="misc_flamme">misc_flamme</option>
+                                  </select>
+                                </div>
+                              </div>
+                              <div class="fx-grow">
+                                <div class="d-flex fx-column">
+                                    <label for="extra-column-input">Column</label>
+                                    <input type="number" step=".1" min="0" name="extra-column-input">
+                                </div>
+                              </div>
+                              <div class="fx-grow">
+                                <div class="d-flex fx-column">
+                                    <label for="extra-line-input">Line</label>
+                                    <input type="number" step=".1" min="0" name="extra-line-input">
+                                </div>
+                              </div>
+                              <div class="fx-grow">
+                                <div class="d-flex fx-column">
+                                  <button class="mt-16" name="extra-remove">Remove</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="d-flex fx-column m-4 p-4 border-grey-1 b-white section starting-tile-parent">
+                            <div class="h-20">Start <input type="checkbox" name="starting-tile"></div>
+                        </div>
+                    </div>
+                </div>
                 <div id="tile-panel" class="panel">
                     <div class="panel-header draggable">
                         <h2>Selected Tile</h2>
                     </div>
                     <div class="panel-body hidden">
-                        <div class="d-flex fx-column m-4 p-4 border-grey-1">
+                        <div class="d-flex fx-column m-4 p-4 border-grey-1 b-white section">
                             <div class="h-20">Block</div>
                             <div class="tile-block-details d-flex fx-row">
                                 <canvas width="0" height="0"></canvas>
@@ -86,7 +142,7 @@
                                 <input name="tile-hitbox-7" type="checkbox"></input>
                             </div>
                         </div>
-                        <div class="d-flex fx-column m-4 p-4 border-grey-1">
+                        <div class="d-flex fx-column m-4 p-4 border-grey-1 b-white section">
                             <div class="h-20">Destructible <input type="checkbox" name="destructible-enabled" data-target="destructible-section"></div>
                             <div id="destructible-section" class="d-flex fx-row hidden">
                                 <div class="d-flex fx-column">
@@ -98,7 +154,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="d-flex fx-column m-4 p-4 border-grey-1">
+                        <div class="d-flex fx-column m-4 p-4 border-grey-1 b-white section">
                             <div class="h-20">Transition <input type="checkbox" name="transition-enabled" data-target="transition-section"></div>
                             <div id="transition-section" class="d-flex fx-row hidden">
                                 <div class="fx-grow">
@@ -166,7 +222,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="d-flex fx-column m-4 p-4 border-grey-1 starting-tile-parent">
+                        <div class="d-flex fx-column m-4 p-4 border-grey-1 b-white section starting-tile-parent">
                             <div class="h-20">Start <input type="checkbox" name="starting-tile"></div>
                         </div>
                     </div>

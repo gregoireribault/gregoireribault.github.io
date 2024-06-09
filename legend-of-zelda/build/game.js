@@ -389,6 +389,7 @@ class Game {
 
   start () {
     this.map.hitbox = _service_hitbox_manager__WEBPACK_IMPORTED_MODULE_4__["default"].computeMapHitboxV2(this.map)
+    this.map.init()
     this.link.hitbox = _service_hitbox_manager__WEBPACK_IMPORTED_MODULE_4__["default"].compute(this.link)
 
     _service_input_manager__WEBPACK_IMPORTED_MODULE_3__["default"].setMapping()
@@ -452,10 +453,12 @@ class Game {
       this.transitionPlaying = true
       this.link.resetActions()
       this.nextMap = tileTransition.getTargetMap()
+      this.nextMap.init()
       const transitionStart = _service_transition_manager__WEBPACK_IMPORTED_MODULE_0__["default"].get(tileTransition.start)
       if (transitionStart) {
         await transitionStart.play(this.link, this.map, this.nextMap)
       }
+      this.map.reset()
       this.map = tileTransition.getTargetMap()
       this.nextMap = undefined
       this.map.hitbox = _service_hitbox_manager__WEBPACK_IMPORTED_MODULE_4__["default"].computeMapHitboxV2(this.map)
@@ -701,6 +704,48 @@ document.querySelector('input#control-import-game').addEventListener('click', as
 
 __webpack_async_result__();
 } catch(e) { __webpack_async_result__(e); } }, 1);
+
+/***/ }),
+
+/***/ "../assets/js/model/extra.js":
+/*!***********************************!*\
+  !*** ../assets/js/model/extra.js ***!
+  \***********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Extra: () => (/* binding */ Extra)
+/* harmony export */ });
+
+
+class Extra {
+  constructor (column, line, x, y, width, height, sprite) {
+    this.column = column
+    this.line = line
+    this.x = x
+    this.y = y
+    this.width = width
+    this.height = height
+    this.sprite = sprite
+  }
+
+  init () {
+    this.sprite.start()
+  }
+
+  reset () {
+    this.sprite.stop()
+  }
+
+  draw (context) {
+    this.sprite.draw(context, this.x, this.y, this.width, this.height)
+  }
+}
+
+
+
 
 /***/ }),
 
@@ -1062,7 +1107,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 class Map {
-  constructor (column, line, x, y, width, height, type, tiles, creatures, items, characters, miscs) {
+  constructor (column, line, x, y, width, height, type, tiles, extras) {
     this.column = column
     this.line = line
     this.x = x
@@ -1073,13 +1118,30 @@ class Map {
     this.height = height
     this.type = type
     this.tiles = tiles
-    this.creatures = creatures
-    this.items = items
-    this.characters = characters
-    this.miscs = miscs
+    this.extras = extras
 
     this.savedItems = []
     this.savedCharacters = []
+    this.mapPath = this.getMapPath()
+  }
+
+  getMapPath () {
+    const path = new Path2D()
+    path.rect(this.x, this.y, this.width, this.height)
+
+    return path
+  }
+
+  init () {
+    for (const extra of this.extras) {
+      extra.init()
+    }
+  }
+
+  reset () {
+    for (const extra of this.extras) {
+      extra.reset()
+    }
   }
 
   draw (context) {
@@ -1092,7 +1154,11 @@ class Map {
       tile.draw(context)
     }
 
-    for (let i = 0; i < this.miscs.length; i++) {
+    for (const extra of this.extras) {
+      extra.draw(context)
+    }
+
+    /* for (let i = 0; i < this.miscs.length; i++) {
       this.miscs[i].draw(context, tileOffsetX, tileOffsetY)
     }
 
@@ -1102,7 +1168,7 @@ class Map {
 
     for (let i = 0; i < this.characters.length; i++) {
       this.characters[i].draw(context, tileOffsetX, tileOffsetY)
-    }
+    } */
     context.translate(-this.offsetX, -this.offsetY)
     context.restore()
   }
@@ -1123,24 +1189,6 @@ class Map {
     for (let column = 0; column < this.tiles.length; column++) {
       for (let line = 0; line < this.tiles[column].length; line++) {
         yield this.tiles[column][line]
-      }
-    }
-  }
-
-  init () {
-
-  }
-
-  reset () {
-    for (let i = 0; i < this.items.length; i++) {
-      if (this.items[i].resetable === true) {
-        this.items[i].reset()
-      }
-    }
-
-    for (let i = 0; i < this.characters.length; i++) {
-      if (this.characters[i].resetable === true) {
-        this.characters[i].reset()
       }
     }
   }
@@ -1409,6 +1457,9 @@ class Tile {
     const tileOffsetY = offsetY !== undefined ? this.y + offsetY : this.y
 
     this.sprite.draw(context, tileOffsetX, tileOffsetY, this.width, this.height)
+    if (this.other) {
+      this.other.draw(context, tileOffsetX, tileOffsetY, this.width, this.height)
+    }
   }
 
   getTilePath () {
@@ -2779,9 +2830,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _resource__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../resource */ "../assets/js/resource.js");
 /* harmony import */ var _hitbox_manager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./hitbox-manager */ "../assets/js/service/hitbox-manager.js");
 /* harmony import */ var _model_tile_transition__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../model/tile-transition */ "../assets/js/model/tile-transition.js");
+/* harmony import */ var _model_extra__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../model/extra */ "../assets/js/model/extra.js");
 
 
 ;
+
 
 
 
@@ -2821,7 +2874,18 @@ __webpack_require__.r(__webpack_exports__);
       if (!maps[column]) {
         maps[column] = []
       }
-      maps[column][line] = new _model_map__WEBPACK_IMPORTED_MODULE_1__.Map(column, line, x, y, width, height, type, tiles, [/* creatures */], [/* items */], [/* characters */], [/* miscs */])
+      const extras = []
+      for (const extraData of mapData.extras) {
+        const extraColumn = extraData.x
+        const extraLine = extraData.y
+        const extraWidth = _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH
+        const extraHeight = _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT
+        const extraX = x + extraColumn * extraWidth
+        const extraY = y + extraLine * extraHeight
+        const extraSprite = _resource__WEBPACK_IMPORTED_MODULE_3__["default"].getSprite(extraData.sprite)
+        extras.push(new _model_extra__WEBPACK_IMPORTED_MODULE_6__.Extra(extraColumn, extraLine, extraX, extraY, extraWidth, extraHeight, extraSprite))
+      }
+      maps[column][line] = new _model_map__WEBPACK_IMPORTED_MODULE_1__.Map(column, line, x, y, width, height, type, tiles, extras)
     }
 
     return maps
@@ -2873,6 +2937,58 @@ __webpack_require__.r(__webpack_exports__);
         yield this[type][column][line]
       }
     }
+  },
+
+  exportGame () {
+    const world = this.exportMaps(_constant__WEBPACK_IMPORTED_MODULE_0__.MAP_TYPE_WORLD)
+    const caverns = this.exportMaps(_constant__WEBPACK_IMPORTED_MODULE_0__.MAP_TYPE_CAVERNS)
+    const level1 = this.exportMaps(_constant__WEBPACK_IMPORTED_MODULE_0__.MAP_TYPE_LEVEL1)
+
+    return { world, caverns, level1 }
+  },
+
+  exportMaps (type) {
+    const mapsData = []
+    for (const map of this.mapsIterator(type)) {
+      const mapData = {
+        x: map.column,
+        y: map.line,
+        tiles: [],
+        extras: []
+      }
+      for (const extra of map.extras) {
+        mapData.extras.push({
+          x: extra.column,
+          y: extra.line,
+          sprite: extra.sprite.name
+        })
+      }
+      for (const tile of map.tilesIterator()) {
+        const tileData = {
+          x: tile.column,
+          y: tile.line,
+          hitbox: tile.hitbox,
+          sprite: tile.sprite.name
+        }
+        if (!tile.tileTransition.isEmpty()) {
+          tileData.transition = {
+            start: tile.tileTransition.start,
+            targetMapType: tile.tileTransition.targetMapType,
+            targetMapColumn: tile.tileTransition.targetMapColumn,
+            targetMapLine: tile.tileTransition.targetMapLine,
+            targetTileColumn: tile.tileTransition.targetTileColumn,
+            targetTileLine: tile.tileTransition.targetTileLine,
+            end: tile.tileTransition.end
+          }
+        }
+        if (tile.start) {
+          tileData.start = true
+        }
+        mapData.tiles.push(tileData)
+      }
+      mapsData.push(mapData)
+    }
+    return mapsData
   }
 });
 
