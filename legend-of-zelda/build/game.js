@@ -98,7 +98,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   SPRITE_LINK_PREFIX: () => (/* binding */ SPRITE_LINK_PREFIX),
 /* harmony export */   SPRITE_TEXT_COLOR_RED: () => (/* binding */ SPRITE_TEXT_COLOR_RED),
 /* harmony export */   SPRITE_TEXT_COLOR_WHITE: () => (/* binding */ SPRITE_TEXT_COLOR_WHITE),
+/* harmony export */   SPRITE_TEXT_HEIGHT: () => (/* binding */ SPRITE_TEXT_HEIGHT),
 /* harmony export */   SPRITE_TEXT_PREFIX: () => (/* binding */ SPRITE_TEXT_PREFIX),
+/* harmony export */   SPRITE_TEXT_WIDTH: () => (/* binding */ SPRITE_TEXT_WIDTH),
 /* harmony export */   SPRITE_WIDTH: () => (/* binding */ SPRITE_WIDTH),
 /* harmony export */   TILES_PATH: () => (/* binding */ TILES_PATH),
 /* harmony export */   TILES_PER_COLUMN: () => (/* binding */ TILES_PER_COLUMN),
@@ -189,6 +191,8 @@ const SPRITE_LINK_PREFIX = 'link'
 const SPRITE_TEXT_PREFIX = 'text'
 const SPRITE_TEXT_COLOR_RED = 'red'
 const SPRITE_TEXT_COLOR_WHITE = 'white'
+const SPRITE_TEXT_WIDTH = 16
+const SPRITE_TEXT_HEIGHT = 16
 const ITEM_LADDER = 'ladder'
 const ITEM_MAGICAL_KEY = 'magical_key'
 const ITEM_POWER_BRACELET_NONE = 'power_bracelet_none'
@@ -718,6 +722,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Character: () => (/* binding */ Character)
 /* harmony export */ });
+/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constant */ "../assets/js/constant.js");
+/* harmony import */ var _service_text_manager__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../service/text-manager */ "../assets/js/service/text-manager.js");
+
+
+;
 
 
 class Character {
@@ -742,6 +751,10 @@ class Character {
 
   draw (context) {
     this.sprite.draw(context, this.x, this.y, this.width, this.height)
+
+    if (this.text) {
+      _service_text_manager__WEBPACK_IMPORTED_MODULE_1__["default"].draw(context, this.text, _constant__WEBPACK_IMPORTED_MODULE_0__.SPRITE_TEXT_COLOR_WHITE, this.x - 4.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH, this.y - 1.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT, 10 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH, 1.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT)
+    }
   }
 }
 
@@ -1633,15 +1646,15 @@ class TopMenu {
 
     // Rupees
     _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite('menu_rupee').draw(context, 160, 16, SPRITE_WIDTH, SPRITE_HEIGHT)
-    _service_text_manager__WEBPACK_IMPORTED_MODULE_2__["default"].draw(context, 'x' + this.link.inventory.rupees, _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_COLOR_WHITE, 176, 16, 32, 16, SPRITE_WIDTH, SPRITE_HEIGHT)
+    _service_text_manager__WEBPACK_IMPORTED_MODULE_2__["default"].draw(context, 'x' + this.link.inventory.rupees, _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_COLOR_WHITE, 176, 16, 32, 16)
 
     // Keys
     _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite('menu_key').draw(context, 160, 48, SPRITE_WIDTH, SPRITE_HEIGHT)
-    _service_text_manager__WEBPACK_IMPORTED_MODULE_2__["default"].draw(context, 'x' + this.link.inventory.keys, _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_COLOR_WHITE, 176, 48, 32, 16, SPRITE_WIDTH, SPRITE_HEIGHT)
+    _service_text_manager__WEBPACK_IMPORTED_MODULE_2__["default"].draw(context, 'x' + this.link.inventory.keys, _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_COLOR_WHITE, 176, 48, 32, 16)
 
     // Bombs
     _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite('menu_bomb').draw(context, 160, 64, SPRITE_WIDTH, SPRITE_HEIGHT)
-    _service_text_manager__WEBPACK_IMPORTED_MODULE_2__["default"].draw(context, 'x' + this.link.inventory.bombs, _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_COLOR_WHITE, 176, 64, 32, 16, SPRITE_WIDTH, SPRITE_HEIGHT)
+    _service_text_manager__WEBPACK_IMPORTED_MODULE_2__["default"].draw(context, 'x' + this.link.inventory.bombs, _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_COLOR_WHITE, 176, 64, 32, 16)
 
     // Item B
     _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite('menu_blue_line_corner_north_west').draw(context, 256, 16, SPRITE_WIDTH, SPRITE_HEIGHT)
@@ -1653,7 +1666,7 @@ class TopMenu {
     _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite('menu_blue_line_vertical').draw(context, 288, 48, SPRITE_WIDTH, SPRITE_HEIGHT)
     _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite('menu_blue_line_vertical').draw(context, 288, 32, SPRITE_WIDTH, SPRITE_HEIGHT)
     _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite('menu_blue_line_corner_north_east').draw(context, 288, 16, SPRITE_WIDTH, SPRITE_HEIGHT)
-    _service_text_manager__WEBPACK_IMPORTED_MODULE_2__["default"].draw(context, 'b', _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_COLOR_WHITE, 272, 16, 16, 16, SPRITE_WIDTH, SPRITE_HEIGHT)
+    _service_text_manager__WEBPACK_IMPORTED_MODULE_2__["default"].draw(context, 'b', _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_COLOR_WHITE, 272, 16, 16, 16)
     if (this.link.itemB !== undefined) {
       this.link.itemB.draw(context, 256 + 8, 16 + 16)
     }
@@ -1668,13 +1681,13 @@ class TopMenu {
     _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite('menu_blue_line_vertical').draw(context, 288 + 48, 48, SPRITE_WIDTH, SPRITE_HEIGHT)
     _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite('menu_blue_line_vertical').draw(context, 288 + 48, 32, SPRITE_WIDTH, SPRITE_HEIGHT)
     _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite('menu_blue_line_corner_north_east').draw(context, 288 + 48, 16, SPRITE_WIDTH, SPRITE_HEIGHT)
-    _service_text_manager__WEBPACK_IMPORTED_MODULE_2__["default"].draw(context, 'a', _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_COLOR_WHITE, 272 + 48, 16, 16, 16, SPRITE_WIDTH, SPRITE_HEIGHT)
+    _service_text_manager__WEBPACK_IMPORTED_MODULE_2__["default"].draw(context, 'a', _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_COLOR_WHITE, 272 + 48, 16, 16, 16)
     if (this.link.itemA !== undefined) {
       this.link.itemA.draw(context, 256 + 48 + 8, 16 + 16)
     }
 
     // Life
-    _service_text_manager__WEBPACK_IMPORTED_MODULE_2__["default"].draw(context, '-life-', _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_COLOR_RED, 384, 16, 96, 16, SPRITE_WIDTH, SPRITE_HEIGHT)
+    _service_text_manager__WEBPACK_IMPORTED_MODULE_2__["default"].draw(context, '-life-', _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_COLOR_RED, 384, 16, 96, 16)
     let x = 368
     let y = 64
     for (let i = 0; i < this.link.totalLife; i++) {
@@ -2820,16 +2833,60 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  draw: function (context, text, color, x, y, width, height, letterWidth, letterHeight) {
-    for (let i = 0; i < text.length; i++) {
-      let char = text[i]
-      char = char.toLowerCase()
-      const sprite = _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite(`${_constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_PREFIX}_${color}_${char}`)
-      if (sprite) {
-        sprite.draw(context, x, y, letterWidth, letterHeight)
+  draw: function (context, text, color, x, y, width, height) {
+    const maxNbLines = Math.floor(height / _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_HEIGHT)
+    const lines = this.splitTextIntoLines(text, width)
+    for (let i = 0; i < lines.length; i++) {
+      const centerdLine = this.centerLine(lines[i], width)
+      this.drawLine(context, centerdLine, color, x, y)
+      y += _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_HEIGHT
+      if ((i + 1) >= maxNbLines) {
+        break
       }
-      x += letterWidth
     }
+  },
+
+  drawLine: function (context, text, color, x, y) {
+    for (const char of text) {
+      const sprite = _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite(`${_constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_PREFIX}_${color}_${char.toLowerCase()}`)
+      if (sprite) {
+        sprite.draw(context, x, y, _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_HEIGHT)
+      }
+      x += _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_WIDTH
+    }
+  },
+
+  splitTextIntoLines: function (text, maxWidth) {
+    const textPerLine = []
+    const nbLettersPerLine = Math.floor(maxWidth / _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_WIDTH)
+    let currentLine = ''
+    const parts = text.split(' ')
+    for (const part of parts) {
+      let currentNbLetters = currentLine.length
+      if (currentNbLetters > 0) {
+        currentNbLetters += 1 // Count space
+      }
+      if (currentNbLetters + part.length <= nbLettersPerLine) {
+        currentLine += currentNbLetters > 0 ? ` ${part}` : `${part}`
+      } else {
+        textPerLine.push(currentLine)
+        currentLine = `${part}`
+      }
+    }
+    if (currentLine.length > 0) {
+      textPerLine.push(currentLine)
+    }
+    return textPerLine
+  },
+
+  centerLine: function (text, maxWidth) {
+    const nbLettersPerLine = Math.floor(maxWidth / _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_WIDTH)
+    const spacesLeft = nbLettersPerLine - text.length
+    const nbStartSpaces = Math.ceil(spacesLeft / 2)
+    const nEndSpaces = Math.floor(spacesLeft / 2)
+    text = text.padStart(text.length + nbStartSpaces, ' ')
+    text = text.padEnd(text.length + nEndSpaces, ' ')
+    return text
   }
 });
 

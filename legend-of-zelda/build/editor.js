@@ -98,7 +98,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   SPRITE_LINK_PREFIX: () => (/* binding */ SPRITE_LINK_PREFIX),
 /* harmony export */   SPRITE_TEXT_COLOR_RED: () => (/* binding */ SPRITE_TEXT_COLOR_RED),
 /* harmony export */   SPRITE_TEXT_COLOR_WHITE: () => (/* binding */ SPRITE_TEXT_COLOR_WHITE),
+/* harmony export */   SPRITE_TEXT_HEIGHT: () => (/* binding */ SPRITE_TEXT_HEIGHT),
 /* harmony export */   SPRITE_TEXT_PREFIX: () => (/* binding */ SPRITE_TEXT_PREFIX),
+/* harmony export */   SPRITE_TEXT_WIDTH: () => (/* binding */ SPRITE_TEXT_WIDTH),
 /* harmony export */   SPRITE_WIDTH: () => (/* binding */ SPRITE_WIDTH),
 /* harmony export */   TILES_PATH: () => (/* binding */ TILES_PATH),
 /* harmony export */   TILES_PER_COLUMN: () => (/* binding */ TILES_PER_COLUMN),
@@ -189,6 +191,8 @@ const SPRITE_LINK_PREFIX = 'link'
 const SPRITE_TEXT_PREFIX = 'text'
 const SPRITE_TEXT_COLOR_RED = 'red'
 const SPRITE_TEXT_COLOR_WHITE = 'white'
+const SPRITE_TEXT_WIDTH = 16
+const SPRITE_TEXT_HEIGHT = 16
 const ITEM_LADDER = 'ladder'
 const ITEM_MAGICAL_KEY = 'magical_key'
 const ITEM_POWER_BRACELET_NONE = 'power_bracelet_none'
@@ -805,6 +809,10 @@ class MapPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defaul
       e.preventDefault()
       self.updateCharacters(self.characterList)
     })
+    section.querySelector('input[name="character-text-input"]').addEventListener('change', (e) => {
+      e.preventDefault()
+      self.updateCharacters(self.characterList)
+    })
     this.characterList.appendChild(section)
     return section
   }
@@ -815,6 +823,7 @@ class MapPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defaul
       this.setSelectValue(section.querySelector('select[name="character-select"]'), character.sprite.name)
       section.querySelector('input[name="character-column-input"]').value = character.column
       section.querySelector('input[name="character-line-input"]').value = character.line
+      section.querySelector('input[name="character-text-input"]').value = character.text ?? ''
     }
   }
 
@@ -824,10 +833,11 @@ class MapPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defaul
       const sprite = _resource__WEBPACK_IMPORTED_MODULE_3__["default"].getSprite(this.getSelectValue(section.querySelector('select[name="character-select"]')))
       const column = section.querySelector('input[name="character-column-input"]').value ? parseFloat(section.querySelector('input[name="character-column-input"]').value) : undefined
       const line = section.querySelector('input[name="character-line-input"]').value ? parseFloat(section.querySelector('input[name="character-line-input"]').value) : undefined
+      const text = section.querySelector('input[name="character-text-input"]').value ?? ''
       if (!!sprite && !!column && !!line) {
         const x = this.map.x + _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_WIDTH * column
         const y = this.map.y + _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_HEIGHT * line
-        const character = new _model_character__WEBPACK_IMPORTED_MODULE_5__.Character(column, line, x, y, _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_HEIGHT, sprite)
+        const character = new _model_character__WEBPACK_IMPORTED_MODULE_5__.Character(column, line, x, y, _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_HEIGHT, sprite, text)
         this.map.characters.push(character)
       }
     })
@@ -2120,6 +2130,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Character: () => (/* binding */ Character)
 /* harmony export */ });
+/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constant */ "../assets/js/constant.js");
+/* harmony import */ var _service_text_manager__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../service/text-manager */ "../assets/js/service/text-manager.js");
+
+
+;
 
 
 class Character {
@@ -2144,6 +2159,10 @@ class Character {
 
   draw (context) {
     this.sprite.draw(context, this.x, this.y, this.width, this.height)
+
+    if (this.text) {
+      _service_text_manager__WEBPACK_IMPORTED_MODULE_1__["default"].draw(context, this.text, _constant__WEBPACK_IMPORTED_MODULE_0__.SPRITE_TEXT_COLOR_WHITE, this.x - 4.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH, this.y - 1.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT, 10 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH, 1.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT)
+    }
   }
 }
 
@@ -3112,6 +3131,85 @@ let gainNode
   },
   stop (sound) {
     sound.stop()
+  }
+});
+
+
+/***/ }),
+
+/***/ "../assets/js/service/text-manager.js":
+/*!********************************************!*\
+  !*** ../assets/js/service/text-manager.js ***!
+  \********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _resource__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../resource */ "../assets/js/resource.js");
+/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../constant */ "../assets/js/constant.js");
+
+
+;
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  draw: function (context, text, color, x, y, width, height) {
+    const maxNbLines = Math.floor(height / _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_HEIGHT)
+    const lines = this.splitTextIntoLines(text, width)
+    for (let i = 0; i < lines.length; i++) {
+      const centerdLine = this.centerLine(lines[i], width)
+      this.drawLine(context, centerdLine, color, x, y)
+      y += _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_HEIGHT
+      if ((i + 1) >= maxNbLines) {
+        break
+      }
+    }
+  },
+
+  drawLine: function (context, text, color, x, y) {
+    for (const char of text) {
+      const sprite = _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite(`${_constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_PREFIX}_${color}_${char.toLowerCase()}`)
+      if (sprite) {
+        sprite.draw(context, x, y, _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_HEIGHT)
+      }
+      x += _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_WIDTH
+    }
+  },
+
+  splitTextIntoLines: function (text, maxWidth) {
+    const textPerLine = []
+    const nbLettersPerLine = Math.floor(maxWidth / _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_WIDTH)
+    let currentLine = ''
+    const parts = text.split(' ')
+    for (const part of parts) {
+      let currentNbLetters = currentLine.length
+      if (currentNbLetters > 0) {
+        currentNbLetters += 1 // Count space
+      }
+      if (currentNbLetters + part.length <= nbLettersPerLine) {
+        currentLine += currentNbLetters > 0 ? ` ${part}` : `${part}`
+      } else {
+        textPerLine.push(currentLine)
+        currentLine = `${part}`
+      }
+    }
+    if (currentLine.length > 0) {
+      textPerLine.push(currentLine)
+    }
+    return textPerLine
+  },
+
+  centerLine: function (text, maxWidth) {
+    const nbLettersPerLine = Math.floor(maxWidth / _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_WIDTH)
+    const spacesLeft = nbLettersPerLine - text.length
+    const nbStartSpaces = Math.ceil(spacesLeft / 2)
+    const nEndSpaces = Math.floor(spacesLeft / 2)
+    text = text.padStart(text.length + nbStartSpaces, ' ')
+    text = text.padEnd(text.length + nEndSpaces, ' ')
+    return text
   }
 });
 
