@@ -398,7 +398,7 @@ class Game {
 
     this.isStarted = true
 
-    _service_sound_manager__WEBPACK_IMPORTED_MODULE_6__["default"].play(_resource__WEBPACK_IMPORTED_MODULE_7__["default"].getSound('overworld'))
+    _service_sound_manager__WEBPACK_IMPORTED_MODULE_6__["default"].play(_resource__WEBPACK_IMPORTED_MODULE_7__["default"].getSound(_constant__WEBPACK_IMPORTED_MODULE_5__.SOUND_OVERWORLD))
 
     // this.link.itemA = ItemManager.create(ItemManager.WOODEN_SWORD, 0, 0)
   }
@@ -1715,6 +1715,7 @@ class CaveExit {
 class CaveStairsDown {
   async play (link) {
     return new Promise((resolve) => {
+      _service_sound_manager__WEBPACK_IMPORTED_MODULE_0__["default"].stop(_resource__WEBPACK_IMPORTED_MODULE_1__["default"].getSound(_constant__WEBPACK_IMPORTED_MODULE_2__.SOUND_OVERWORLD))
       _service_sound_manager__WEBPACK_IMPORTED_MODULE_0__["default"].play(_resource__WEBPACK_IMPORTED_MODULE_1__["default"].getSound(_constant__WEBPACK_IMPORTED_MODULE_2__.SOUND_STAIRS))
       link.direction = _constant__WEBPACK_IMPORTED_MODULE_2__.DIRECTION_NORTH
       link.x = link.tile.x
@@ -1739,7 +1740,6 @@ class CaveStairsDown {
 }
 
 class CaveStairsUp {
-  return
   async play (link) {
     return new Promise((resolve) => {
       _service_sound_manager__WEBPACK_IMPORTED_MODULE_0__["default"].play(_resource__WEBPACK_IMPORTED_MODULE_1__["default"].getSound(_constant__WEBPACK_IMPORTED_MODULE_2__.SOUND_STAIRS))
@@ -1752,6 +1752,7 @@ class CaveStairsUp {
           clearInterval(transitionInterval)
           link.clipY = 0
           link.stopWalking()
+          _service_sound_manager__WEBPACK_IMPORTED_MODULE_0__["default"].play(_resource__WEBPACK_IMPORTED_MODULE_1__["default"].getSound(_constant__WEBPACK_IMPORTED_MODULE_2__.SOUND_OVERWORLD))
           resolve()
         }
       }, 30)
