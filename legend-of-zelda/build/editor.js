@@ -661,9 +661,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../constant */ "../assets/js/constant.js");
 /* harmony import */ var _resource__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../resource */ "../assets/js/resource.js");
 /* harmony import */ var _model_extra__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../model/extra */ "../assets/js/model/extra.js");
+/* harmony import */ var _model_character__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../model/character */ "../assets/js/model/character.js");
 
 
 ;
+
 
 
 
@@ -682,7 +684,14 @@ class MapPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defaul
     this.canvas.width = PREVIEW_WIDTH
     this.canvas.height = PREVIEW_HEIGHT
 
-    // Sprites
+    // Character
+    this.addCharacterButton = element.querySelector('button#add-character')
+    this.characterList = element.querySelector('div#character-list')
+    this.characterSectionTemplate = this.characterList.querySelector('.character-section')
+    this.characterSectionTemplate.remove()
+    this.addCharacterButtonListener = this.addCharacterButtonListener.bind(this)
+
+    // Extras
     this.addExtraButton = element.querySelector('button#add-extra')
     this.extraList = element.querySelector('div#extra-list')
     this.extraSectionTemplate = this.extraList.querySelector('.extra-section')
@@ -703,7 +712,7 @@ class MapPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defaul
     })
     _event__WEBPACK_IMPORTED_MODULE_1__["default"].on('editor:cancel', () => {
       self.canvas.closest('.panel-body').classList.add('hidden')
-      self.applyMap(undefined)
+      self.applyMap()
       self.draw()
     })
     _event__WEBPACK_IMPORTED_MODULE_1__["default"].on('menu:map-selector:display-world', () => {
@@ -729,6 +738,10 @@ class MapPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defaul
       return
     }
 
+    // Character
+    this.addCharacterButton.removeEventListener('click', this.savedAddCharacterButtonListener)
+    this.resetSections(this.characterList)
+
     // Extras
     this.addExtraButton.removeEventListener('click', this.savedAddExtraButtonListener)
     this.resetSections(this.extraList)
@@ -745,29 +758,106 @@ class MapPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defaul
       element.classList.remove('hidden')
     })
 
+    // Character
+    this.addCharacterButton.addEventListener('click', this.savedAddCharacterButtonListener = this.addCharacterButtonListener)
+    this.initCharacters()
+    this.toggleAddCharacterButtonEnabled()
+
     // Extras
     this.addExtraButton.addEventListener('click', this.savedAddExtraButtonListener = this.addExtraButtonListener)
     this.initExtras()
+    this.toggleAddExtraButtonEnabled()
+  }
+
+  toggleAddCharacterButtonEnabled () {
+    const max = this.addCharacterButton.dataset.max ? parseInt(this.addCharacterButton.dataset.max) : undefined
+    if (max && this.characterList.children.length >= max) {
+      this.addCharacterButton.setAttribute('disabled', true)
+    } else {
+      this.addCharacterButton.removeAttribute('disabled')
+    }
+  }
+
+  addCharacterButtonListener (e) {
+    e.preventDefault()
+    this.addCharacterSection()
+    this.toggleAddCharacterButtonEnabled()
+  }
+
+  addCharacterSection () {
+    const section = this.characterSectionTemplate.cloneNode(true)
+    const self = this
+    section.querySelector('button[name="character-remove"]').addEventListener('click', (e) => {
+      e.preventDefault()
+      section.remove()
+      self.updateCharacters(self.characterList)
+      self.toggleAddCharacterButtonEnabled()
+    })
+    section.querySelector('select[name="character-select"]').addEventListener('change', (e) => {
+      e.preventDefault()
+      self.updateCharacters(self.characterList)
+    })
+    section.querySelector('input[name="character-column-input"]').addEventListener('change', (e) => {
+      e.preventDefault()
+      self.updateCharacters(self.characterList)
+    })
+    section.querySelector('input[name="character-line-input"]').addEventListener('change', (e) => {
+      e.preventDefault()
+      self.updateCharacters(self.characterList)
+    })
+    this.characterList.appendChild(section)
+    return section
+  }
+
+  initCharacters () {
+    for (const character of this.map.characters) {
+      const section = this.addCharacterSection()
+      this.setSelectValue(section.querySelector('select[name="character-select"]'), character.sprite.name)
+      section.querySelector('input[name="character-column-input"]').value = character.column
+      section.querySelector('input[name="character-line-input"]').value = character.line
+    }
+  }
+
+  updateCharacters (container) {
+    this.map.characters = []
+    container.querySelectorAll('.character-section').forEach((section) => {
+      const sprite = _resource__WEBPACK_IMPORTED_MODULE_3__["default"].getSprite(this.getSelectValue(section.querySelector('select[name="character-select"]')))
+      const column = section.querySelector('input[name="character-column-input"]').value ? parseFloat(section.querySelector('input[name="character-column-input"]').value) : undefined
+      const line = section.querySelector('input[name="character-line-input"]').value ? parseFloat(section.querySelector('input[name="character-line-input"]').value) : undefined
+      if (!!sprite && !!column && !!line) {
+        const x = this.map.x + _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_WIDTH * column
+        const y = this.map.y + _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_HEIGHT * line
+        const character = new _model_character__WEBPACK_IMPORTED_MODULE_5__.Character(column, line, x, y, _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_WIDTH, _constant__WEBPACK_IMPORTED_MODULE_2__.TILE_HEIGHT, sprite)
+        this.map.characters.push(character)
+      }
+    })
+    this.draw()
+    _event__WEBPACK_IMPORTED_MODULE_1__["default"].broadcast('map-panel:update')
+  }
+
+  toggleAddExtraButtonEnabled () {
+    const max = this.addExtraButton.dataset.max ? parseInt(this.addExtraButton.dataset.max) : undefined
+    if (max && this.extraList.childNodes.length >= max) {
+      this.addExtraButton.setAttribute('disabled', true)
+    } else {
+      this.addExtraButton.removeAttribute('disabled')
+    }
   }
 
   addExtraButtonListener (e) {
     e.preventDefault()
     this.addExtraSection()
+    this.toggleAddExtraButtonEnabled()
   }
 
   addExtraSection () {
-    const index = this.extraList.children.length
     const section = this.extraSectionTemplate.cloneNode(true)
-    const namedElements = section.querySelectorAll('[name]')
-    namedElements.forEach(namedElement => {
-      namedElement.dataset.index = index
-    })
     const self = this
     section.querySelector('button[name="extra-remove"]').addEventListener('click', (e) => {
       e.preventDefault()
       section.remove()
-      self.reorderSections(self.extraList)
       self.updateExtras(self.extraList)
+      self.toggleAddExtraButtonEnabled()
     })
     section.querySelector('select[name="extra-select"]').addEventListener('change', (e) => {
       e.preventDefault()
@@ -785,16 +875,6 @@ class MapPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defaul
     return section
   }
 
-  reorderSections (container) {
-    const sections = container.querySelectorAll('.extra-section')
-    sections.forEach((section, index) => {
-      const namedElements = section.querySelectorAll('[name]')
-      namedElements.forEach(namedElement => {
-        namedElement.dataset.index = index
-      })
-    })
-  }
-
   resetSections (container) {
     container.replaceChildren()
   }
@@ -810,7 +890,7 @@ class MapPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defaul
 
   updateExtras (container) {
     this.map.extras = []
-    container.querySelectorAll('.extra-section').forEach((section, index) => {
+    container.querySelectorAll('.extra-section').forEach((section) => {
       const sprite = _resource__WEBPACK_IMPORTED_MODULE_3__["default"].getSprite(this.getSelectValue(section.querySelector('select[name="extra-select"]')))
       const column = section.querySelector('input[name="extra-column-input"]').value ? parseFloat(section.querySelector('input[name="extra-column-input"]').value) : undefined
       const line = section.querySelector('input[name="extra-line-input"]').value ? parseFloat(section.querySelector('input[name="extra-line-input"]').value) : undefined
@@ -2029,6 +2109,49 @@ class WorldPanel extends Panel_abstract_panel__WEBPACK_IMPORTED_MODULE_0__["defa
 
 /***/ }),
 
+/***/ "../assets/js/model/character.js":
+/*!***************************************!*\
+  !*** ../assets/js/model/character.js ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Character: () => (/* binding */ Character)
+/* harmony export */ });
+
+
+class Character {
+  constructor (column, line, x, y, width, height, sprite, text) {
+    this.column = column
+    this.line = line
+    this.x = x
+    this.y = y
+    this.width = width
+    this.height = height
+    this.sprite = sprite
+    this.text = text
+  }
+
+  init () {
+    this.sprite.start()
+  }
+
+  reset () {
+    this.sprite.stop()
+  }
+
+  draw (context) {
+    this.sprite.draw(context, this.x, this.y, this.width, this.height)
+  }
+}
+
+
+
+
+/***/ }),
+
 /***/ "../assets/js/model/extra.js":
 /*!***********************************!*\
   !*** ../assets/js/model/extra.js ***!
@@ -2085,7 +2208,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 class Map {
-  constructor (column, line, x, y, width, height, type, tiles, extras) {
+  constructor (column, line, x, y, width, height, type, tiles, characters, extras) {
     this.column = column
     this.line = line
     this.x = x
@@ -2096,6 +2219,7 @@ class Map {
     this.height = height
     this.type = type
     this.tiles = tiles
+    this.characters = characters
     this.extras = extras
 
     this.savedItems = []
@@ -2111,12 +2235,18 @@ class Map {
   }
 
   init () {
+    for (const character of this.characters) {
+      character.init()
+    }
     for (const extra of this.extras) {
       extra.init()
     }
   }
 
   reset () {
+    for (const character of this.characters) {
+      character.reset()
+    }
     for (const extra of this.extras) {
       extra.reset()
     }
@@ -2130,6 +2260,10 @@ class Map {
 
     for (const tile of this.tilesIterator()) {
       tile.draw(context)
+    }
+
+    for (const character of this.characters) {
+      character.draw(context)
     }
 
     for (const extra of this.extras) {
@@ -3002,9 +3136,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _hitbox_manager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./hitbox-manager */ "../assets/js/service/hitbox-manager.js");
 /* harmony import */ var _model_tile_transition__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../model/tile-transition */ "../assets/js/model/tile-transition.js");
 /* harmony import */ var _model_extra__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../model/extra */ "../assets/js/model/extra.js");
+/* harmony import */ var _model_character__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../model/character */ "../assets/js/model/character.js");
 
 
 ;
+
 
 
 
@@ -3045,6 +3181,18 @@ __webpack_require__.r(__webpack_exports__);
       if (!maps[column]) {
         maps[column] = []
       }
+      const characters = []
+      for (const characteraData of mapData.characters) {
+        const characterColumn = characteraData.x
+        const characterLine = characteraData.y
+        const characterWidth = _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH
+        const characterHeight = _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT
+        const characterX = x + characterColumn * characterWidth
+        const characterY = y + characterLine * characterHeight
+        const characterSprite = _resource__WEBPACK_IMPORTED_MODULE_3__["default"].getSprite(characteraData.sprite)
+        const characterText = characteraData.text
+        characters.push(new _model_character__WEBPACK_IMPORTED_MODULE_7__.Character(characterColumn, characterLine, characterX, characterY, characterWidth, characterHeight, characterSprite, characterText))
+      }
       const extras = []
       for (const extraData of mapData.extras) {
         const extraColumn = extraData.x
@@ -3056,7 +3204,7 @@ __webpack_require__.r(__webpack_exports__);
         const extraSprite = _resource__WEBPACK_IMPORTED_MODULE_3__["default"].getSprite(extraData.sprite)
         extras.push(new _model_extra__WEBPACK_IMPORTED_MODULE_6__.Extra(extraColumn, extraLine, extraX, extraY, extraWidth, extraHeight, extraSprite))
       }
-      maps[column][line] = new _model_map__WEBPACK_IMPORTED_MODULE_1__.Map(column, line, x, y, width, height, type, tiles, extras)
+      maps[column][line] = new _model_map__WEBPACK_IMPORTED_MODULE_1__.Map(column, line, x, y, width, height, type, tiles, characters, extras)
     }
 
     return maps
@@ -3125,7 +3273,16 @@ __webpack_require__.r(__webpack_exports__);
         x: map.column,
         y: map.line,
         tiles: [],
+        characters: [],
         extras: []
+      }
+      for (const character of map.characters) {
+        mapData.characters.push({
+          x: character.column,
+          y: character.line,
+          sprite: character.sprite.name,
+          text: character.text
+        })
       }
       for (const extra of map.extras) {
         mapData.extras.push({

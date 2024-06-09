@@ -707,6 +707,49 @@ __webpack_async_result__();
 
 /***/ }),
 
+/***/ "../assets/js/model/character.js":
+/*!***************************************!*\
+  !*** ../assets/js/model/character.js ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Character: () => (/* binding */ Character)
+/* harmony export */ });
+
+
+class Character {
+  constructor (column, line, x, y, width, height, sprite, text) {
+    this.column = column
+    this.line = line
+    this.x = x
+    this.y = y
+    this.width = width
+    this.height = height
+    this.sprite = sprite
+    this.text = text
+  }
+
+  init () {
+    this.sprite.start()
+  }
+
+  reset () {
+    this.sprite.stop()
+  }
+
+  draw (context) {
+    this.sprite.draw(context, this.x, this.y, this.width, this.height)
+  }
+}
+
+
+
+
+/***/ }),
+
 /***/ "../assets/js/model/extra.js":
 /*!***********************************!*\
   !*** ../assets/js/model/extra.js ***!
@@ -1107,7 +1150,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 class Map {
-  constructor (column, line, x, y, width, height, type, tiles, extras) {
+  constructor (column, line, x, y, width, height, type, tiles, characters, extras) {
     this.column = column
     this.line = line
     this.x = x
@@ -1118,6 +1161,7 @@ class Map {
     this.height = height
     this.type = type
     this.tiles = tiles
+    this.characters = characters
     this.extras = extras
 
     this.savedItems = []
@@ -1133,12 +1177,18 @@ class Map {
   }
 
   init () {
+    for (const character of this.characters) {
+      character.init()
+    }
     for (const extra of this.extras) {
       extra.init()
     }
   }
 
   reset () {
+    for (const character of this.characters) {
+      character.reset()
+    }
     for (const extra of this.extras) {
       extra.reset()
     }
@@ -1152,6 +1202,10 @@ class Map {
 
     for (const tile of this.tilesIterator()) {
       tile.draw(context)
+    }
+
+    for (const character of this.characters) {
+      character.draw(context)
     }
 
     for (const extra of this.extras) {
@@ -2832,9 +2886,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _hitbox_manager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./hitbox-manager */ "../assets/js/service/hitbox-manager.js");
 /* harmony import */ var _model_tile_transition__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../model/tile-transition */ "../assets/js/model/tile-transition.js");
 /* harmony import */ var _model_extra__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../model/extra */ "../assets/js/model/extra.js");
+/* harmony import */ var _model_character__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../model/character */ "../assets/js/model/character.js");
 
 
 ;
+
 
 
 
@@ -2875,6 +2931,18 @@ __webpack_require__.r(__webpack_exports__);
       if (!maps[column]) {
         maps[column] = []
       }
+      const characters = []
+      for (const characteraData of mapData.characters) {
+        const characterColumn = characteraData.x
+        const characterLine = characteraData.y
+        const characterWidth = _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH
+        const characterHeight = _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT
+        const characterX = x + characterColumn * characterWidth
+        const characterY = y + characterLine * characterHeight
+        const characterSprite = _resource__WEBPACK_IMPORTED_MODULE_3__["default"].getSprite(characteraData.sprite)
+        const characterText = characteraData.text
+        characters.push(new _model_character__WEBPACK_IMPORTED_MODULE_7__.Character(characterColumn, characterLine, characterX, characterY, characterWidth, characterHeight, characterSprite, characterText))
+      }
       const extras = []
       for (const extraData of mapData.extras) {
         const extraColumn = extraData.x
@@ -2886,7 +2954,7 @@ __webpack_require__.r(__webpack_exports__);
         const extraSprite = _resource__WEBPACK_IMPORTED_MODULE_3__["default"].getSprite(extraData.sprite)
         extras.push(new _model_extra__WEBPACK_IMPORTED_MODULE_6__.Extra(extraColumn, extraLine, extraX, extraY, extraWidth, extraHeight, extraSprite))
       }
-      maps[column][line] = new _model_map__WEBPACK_IMPORTED_MODULE_1__.Map(column, line, x, y, width, height, type, tiles, extras)
+      maps[column][line] = new _model_map__WEBPACK_IMPORTED_MODULE_1__.Map(column, line, x, y, width, height, type, tiles, characters, extras)
     }
 
     return maps
@@ -2955,7 +3023,16 @@ __webpack_require__.r(__webpack_exports__);
         x: map.column,
         y: map.line,
         tiles: [],
+        characters: [],
         extras: []
+      }
+      for (const character of map.characters) {
+        mapData.characters.push({
+          x: character.column,
+          y: character.line,
+          sprite: character.sprite.name,
+          text: character.text
+        })
       }
       for (const extra of map.extras) {
         mapData.extras.push({
