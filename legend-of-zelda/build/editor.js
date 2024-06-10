@@ -93,6 +93,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   SOUND_SWORD_SHOOT: () => (/* binding */ SOUND_SWORD_SHOOT),
 /* harmony export */   SOUND_SWORD_SLASH: () => (/* binding */ SOUND_SWORD_SLASH),
 /* harmony export */   SOUND_TEXT: () => (/* binding */ SOUND_TEXT),
+/* harmony export */   SOUND_TEXT_LOOP: () => (/* binding */ SOUND_TEXT_LOOP),
 /* harmony export */   SOUND_TEXT_SLOW: () => (/* binding */ SOUND_TEXT_SLOW),
 /* harmony export */   SPRITE_HEIGHT: () => (/* binding */ SPRITE_HEIGHT),
 /* harmony export */   SPRITE_LINK_PREFIX: () => (/* binding */ SPRITE_LINK_PREFIX),
@@ -186,6 +187,7 @@ const SOUND_SWORD_COMBINED = 'sword_combined'
 const SOUND_SWORD_SHOOT = 'sword_shoot'
 const SOUND_SWORD_SLASH = 'sword_slash'
 const SOUND_TEXT = 'text'
+const SOUND_TEXT_LOOP = 'text_loop'
 const SOUND_TEXT_SLOW = 'text_slow'
 const SPRITE_LINK_PREFIX = 'link'
 const SPRITE_TEXT_PREFIX = 'text'
@@ -2147,6 +2149,7 @@ class Character {
     this.height = height
     this.sprite = sprite
     this.text = text
+    this.displayedText = ''
   }
 
   init () {
@@ -2155,14 +2158,17 @@ class Character {
 
   reset () {
     this.sprite.stop()
+    this.displayedText = ''
+  }
+
+  hasStoppedTalking() {
+    return this.displayedText === this.text
   }
 
   draw (context) {
     this.sprite.draw(context, this.x, this.y, this.width, this.height)
 
-    if (this.text) {
-      _service_text_manager__WEBPACK_IMPORTED_MODULE_1__["default"].draw(context, this.text, _constant__WEBPACK_IMPORTED_MODULE_0__.SPRITE_TEXT_COLOR_WHITE, this.x - 4.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH, this.y - 1.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT, 10 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH, 1.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT)
-    }
+    _service_text_manager__WEBPACK_IMPORTED_MODULE_1__["default"].draw(context, this.text, _constant__WEBPACK_IMPORTED_MODULE_0__.SPRITE_TEXT_COLOR_WHITE, this.x - 4.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH, this.y - 1.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT, 10 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH, 1.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT, this.displayedText.length)
   }
 }
 
@@ -2244,6 +2250,10 @@ class Map {
     this.savedItems = []
     this.savedCharacters = []
     this.mapPath = this.getMapPath()
+  }
+
+  get character() {
+    return this.characters[0]
   }
 
   getMapPath () {
@@ -2371,7 +2381,9 @@ class Sound {
   }
 
   stop () {
-    this.source.stop(0)
+    if (this.source) {
+      this.source.stop(0)
+    }
   }
 }
 
@@ -2717,10 +2729,10 @@ const sounds = {}
       dataSounds = resources[0]
       audioSounds = resources[1]
     }
-    let offset = 0
     for (let i = 0; i < dataSounds.length; i++) {
       const dataSound = dataSounds[i]
       const bytes = dataSound.bytes
+      const offset = dataSound.offset
       const arrayBuffer = audioSounds.slice(offset, offset + bytes)
       const audioBuffer = await context.decodeAudioData(arrayBuffer)
       const name = dataSound.name
@@ -2729,7 +2741,6 @@ const sounds = {}
       const loopEnd = dataSound.loop_end || 0
       const loopStart = dataSound.loop_start || 0
       sounds[name] = new _model_resource_sound__WEBPACK_IMPORTED_MODULE_4__.Sound(name, audioBuffer, context, gainNode, duration, loop, loopStart, loopEnd)
-      offset += bytes
     }
   },
   cloneSound: (name) => {
@@ -3156,12 +3167,16 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  draw: function (context, text, color, x, y, width, height) {
+  draw: function (context, text, color, x, y, width, height, maxLength) {
+    maxLength = maxLength === undefined ? text.length : maxLength
     const maxNbLines = Math.floor(height / _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_HEIGHT)
     const lines = this.splitTextIntoLines(text, width)
+    let nbDisplayedCharacters = 0
     for (let i = 0; i < lines.length; i++) {
-      const centerdLine = this.centerLine(lines[i], width)
-      this.drawLine(context, centerdLine, color, x, y)
+      const centeredLine = this.centerLine(lines[i], width)
+      const displayedLine = centeredLine.substring(0, maxLength - nbDisplayedCharacters)
+      nbDisplayedCharacters += displayedLine.length
+      this.drawLine(context, displayedLine, color, x, y)
       y += _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_HEIGHT
       if ((i + 1) >= maxNbLines) {
         break
@@ -3169,7 +3184,7 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
 
-  drawLine: function (context, text, color, x, y) {
+  drawLine: function (context, text, color, x, y, maxLength) {
     for (const char of text) {
       const sprite = _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite(`${_constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_PREFIX}_${color}_${char.toLowerCase()}`)
       if (sprite) {

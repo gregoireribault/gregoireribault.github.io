@@ -93,6 +93,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   SOUND_SWORD_SHOOT: () => (/* binding */ SOUND_SWORD_SHOOT),
 /* harmony export */   SOUND_SWORD_SLASH: () => (/* binding */ SOUND_SWORD_SLASH),
 /* harmony export */   SOUND_TEXT: () => (/* binding */ SOUND_TEXT),
+/* harmony export */   SOUND_TEXT_LOOP: () => (/* binding */ SOUND_TEXT_LOOP),
 /* harmony export */   SOUND_TEXT_SLOW: () => (/* binding */ SOUND_TEXT_SLOW),
 /* harmony export */   SPRITE_HEIGHT: () => (/* binding */ SPRITE_HEIGHT),
 /* harmony export */   SPRITE_LINK_PREFIX: () => (/* binding */ SPRITE_LINK_PREFIX),
@@ -186,6 +187,7 @@ const SOUND_SWORD_COMBINED = 'sword_combined'
 const SOUND_SWORD_SHOOT = 'sword_shoot'
 const SOUND_SWORD_SLASH = 'sword_slash'
 const SOUND_TEXT = 'text'
+const SOUND_TEXT_LOOP = 'text_loop'
 const SOUND_TEXT_SLOW = 'text_slow'
 const SPRITE_LINK_PREFIX = 'link'
 const SPRITE_TEXT_PREFIX = 'text'
@@ -295,7 +297,8 @@ class Debug {
     })
     convertToLozInput.addEventListener('click', async (e) => {
       e.preventDefault()
-      const data = await _utils_io__WEBPACK_IMPORTED_MODULE_1__["default"].openFile()
+      let data = await _utils_io__WEBPACK_IMPORTED_MODULE_1__["default"].openFile()
+      data = JSON.stringify(data)
       await _utils_io__WEBPACK_IMPORTED_MODULE_1__["default"].dowloadFile(data, _constant__WEBPACK_IMPORTED_MODULE_0__.FILE_TYPE_LOZ)
     })
   }
@@ -438,7 +441,18 @@ class Game {
       return
     }
 
-    // Process transitions
+    // Process static transitions
+    if (this.map.character && !this.map.character.hasStoppedTalking()) {
+      this.transitionPlaying = true
+      this.link.resetActions()
+      const transition = new _model_transition__WEBPACK_IMPORTED_MODULE_10__.Dialog()
+      await transition.play(this.link)
+      this.transitionPlaying = false
+      return
+    }
+
+
+    // Process move transitions
     const linkTile = _service_hitbox_manager__WEBPACK_IMPORTED_MODULE_4__["default"].getLinkTile(this.map, this.link)
     if (linkTile && linkTile !== this.link.tile) {
       linkTile.tileTransition.enabled = true
@@ -739,6 +753,7 @@ class Character {
     this.height = height
     this.sprite = sprite
     this.text = text
+    this.displayedText = ''
   }
 
   init () {
@@ -747,14 +762,17 @@ class Character {
 
   reset () {
     this.sprite.stop()
+    this.displayedText = ''
+  }
+
+  hasStoppedTalking() {
+    return this.displayedText === this.text
   }
 
   draw (context) {
     this.sprite.draw(context, this.x, this.y, this.width, this.height)
 
-    if (this.text) {
-      _service_text_manager__WEBPACK_IMPORTED_MODULE_1__["default"].draw(context, this.text, _constant__WEBPACK_IMPORTED_MODULE_0__.SPRITE_TEXT_COLOR_WHITE, this.x - 4.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH, this.y - 1.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT, 10 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH, 1.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT)
-    }
+    _service_text_manager__WEBPACK_IMPORTED_MODULE_1__["default"].draw(context, this.text, _constant__WEBPACK_IMPORTED_MODULE_0__.SPRITE_TEXT_COLOR_WHITE, this.x - 4.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH, this.y - 1.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT, 10 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_WIDTH, 1.5 * _constant__WEBPACK_IMPORTED_MODULE_0__.TILE_HEIGHT, this.displayedText.length)
   }
 }
 
@@ -1182,6 +1200,10 @@ class Map {
     this.mapPath = this.getMapPath()
   }
 
+  get character() {
+    return this.characters[0]
+  }
+
   getMapPath () {
     const path = new Path2D()
     path.rect(this.x, this.y, this.width, this.height)
@@ -1307,7 +1329,9 @@ class Sound {
   }
 
   stop () {
-    this.source.stop(0)
+    if (this.source) {
+      this.source.stop(0)
+    }
   }
 }
 
@@ -1726,6 +1750,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   CaveExit: () => (/* binding */ CaveExit),
 /* harmony export */   CaveStairsDown: () => (/* binding */ CaveStairsDown),
 /* harmony export */   CaveStairsUp: () => (/* binding */ CaveStairsUp),
+/* harmony export */   Dialog: () => (/* binding */ Dialog),
 /* harmony export */   MapDrag: () => (/* binding */ MapDrag)
 /* harmony export */ });
 /* harmony import */ var _service_sound_manager__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../service/sound-manager */ "../assets/js/service/sound-manager.js");
@@ -2056,45 +2081,20 @@ class ItemPicking {
 }
 
 class Dialog {
-  constructor () {
-    this.dialog = undefined
-  }
-
-  getNextMap (map) {
-    return undefined
-  }
-
-  shouldBePlayed (map, link) {
-    for (let i = 0; i < map.characters.length; i++) {
-      const character = map.characters[i]
-      if (character !== undefined && character.dialog !== undefined && !character.dialog.isCompleted()) {
-        this.dialog = character.dialog
-        return true
-      }
-    }
-
-    return false
-  }
-
-  async playBeforeMapChange (map, nextMap, link) {
-    const characters = this.dialog.characters
-    let index = 0
-
+  async play (link) {
+    let length = 0
+    _service_sound_manager__WEBPACK_IMPORTED_MODULE_0__["default"].play(_resource__WEBPACK_IMPORTED_MODULE_1__["default"].getSound(_constant__WEBPACK_IMPORTED_MODULE_2__.SOUND_TEXT_LOOP))
     return new Promise((resolve) => {
-      var transitionInterval = setInterval(() => {
-        characters[index].visible = true
-        _service_sound_manager__WEBPACK_IMPORTED_MODULE_0__["default"].play(_resource__WEBPACK_IMPORTED_MODULE_1__["default"].getSound(SOUND_TEXT))
-        index++
-        if (index >= characters.length) {
+      const transitionInterval = setInterval(() => {
+        length++
+        link.map.character.displayedText = link.map.character.text.substring(0, length)
+        if (link.map.character.displayedText === link.map.character.text) {
+          _service_sound_manager__WEBPACK_IMPORTED_MODULE_0__["default"].stop(_resource__WEBPACK_IMPORTED_MODULE_1__["default"].getSound(_constant__WEBPACK_IMPORTED_MODULE_2__.SOUND_TEXT_LOOP))
           clearInterval(transitionInterval)
           resolve()
         }
-      }, 100)
+      }, 50)
     })
-  }
-
-  async playAfterMapChange (map, link) {
-    return new Promise((resolve) => resolve())
   }
 
   static get NAME () {
@@ -2176,10 +2176,10 @@ const sounds = {}
       dataSounds = resources[0]
       audioSounds = resources[1]
     }
-    let offset = 0
     for (let i = 0; i < dataSounds.length; i++) {
       const dataSound = dataSounds[i]
       const bytes = dataSound.bytes
+      const offset = dataSound.offset
       const arrayBuffer = audioSounds.slice(offset, offset + bytes)
       const audioBuffer = await context.decodeAudioData(arrayBuffer)
       const name = dataSound.name
@@ -2188,7 +2188,6 @@ const sounds = {}
       const loopEnd = dataSound.loop_end || 0
       const loopStart = dataSound.loop_start || 0
       sounds[name] = new _model_resource_sound__WEBPACK_IMPORTED_MODULE_4__.Sound(name, audioBuffer, context, gainNode, duration, loop, loopStart, loopEnd)
-      offset += bytes
     }
   },
   cloneSound: (name) => {
@@ -2833,12 +2832,16 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  draw: function (context, text, color, x, y, width, height) {
+  draw: function (context, text, color, x, y, width, height, maxLength) {
+    maxLength = maxLength === undefined ? text.length : maxLength
     const maxNbLines = Math.floor(height / _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_HEIGHT)
     const lines = this.splitTextIntoLines(text, width)
+    let nbDisplayedCharacters = 0
     for (let i = 0; i < lines.length; i++) {
-      const centerdLine = this.centerLine(lines[i], width)
-      this.drawLine(context, centerdLine, color, x, y)
+      const centeredLine = this.centerLine(lines[i], width)
+      const displayedLine = centeredLine.substring(0, maxLength - nbDisplayedCharacters)
+      nbDisplayedCharacters += displayedLine.length
+      this.drawLine(context, displayedLine, color, x, y)
       y += _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_HEIGHT
       if ((i + 1) >= maxNbLines) {
         break
@@ -2846,7 +2849,7 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
 
-  drawLine: function (context, text, color, x, y) {
+  drawLine: function (context, text, color, x, y, maxLength) {
     for (const char of text) {
       const sprite = _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite(`${_constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_PREFIX}_${color}_${char.toLowerCase()}`)
       if (sprite) {
