@@ -3175,7 +3175,7 @@ __webpack_require__.r(__webpack_exports__);
     for (let i = 0; i < lines.length; i++) {
       const centeredLine = this.centerLine(lines[i], width)
       const displayedLine = centeredLine.substring(0, maxLength - nbDisplayedCharacters)
-      nbDisplayedCharacters += displayedLine.length
+      nbDisplayedCharacters += (displayedLine.length - 1) // Sub one to handle skipped space on line break
       this.drawLine(context, displayedLine, color, x, y)
       y += _constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_HEIGHT
       if ((i + 1) >= maxNbLines) {
@@ -3184,7 +3184,7 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
 
-  drawLine: function (context, text, color, x, y, maxLength) {
+  drawLine: function (context, text, color, x, y) {
     for (const char of text) {
       const sprite = _resource__WEBPACK_IMPORTED_MODULE_0__["default"].getSprite(`${_constant__WEBPACK_IMPORTED_MODULE_1__.SPRITE_TEXT_PREFIX}_${color}_${char.toLowerCase()}`)
       if (sprite) {
