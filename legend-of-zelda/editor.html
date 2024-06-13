@@ -120,9 +120,81 @@
                           </div>
                         </div>
                         <div class="d-flex fx-column m-4 p-4 border-grey-1 b-white section">
-                          <div class="h-20">Item <input type="checkbox" name="item-enabled" data-target="item-section"></div>
-                          <div id="item-section" class="d-flex fx-row hidden">
-                            Work in progress
+                          <div class="h-20">Item <button id="add-item" data-max="3">Add</button></div>
+                          <div id="item-list" class="list">
+                            <div class="d-flex fx-row item-section">
+                              <div class="fx-grow">
+                                <div class="d-flex fx-column">
+                                  <label for="item-select">Item</label>
+                                  <select name="item-select">
+                                      <option value=""></option>
+                                      <option value="item_wooden_sword">item_wooden_sword</option>
+                                      <option value="item_white_sword">item_white_sword</option>
+                                      <option value="item_magical_sword">item_magical_sword</option>
+                                      <option value="item_magical_shield">item_magical_shield</option>
+                                      <option value="item_wooden_boomerang">item_wooden_boomerang</option>
+                                      <option value="item_magical_boomerang">item_magical_boomerang</option>
+                                      <option value="item_bomb">item_bomb</option>
+                                      <option value="item_green_bow">item_green_bow</option>
+                                      <option value="item_blue_bow">item_blue_bow</option>
+                                      <option value="item_red_bow">item_red_bow</option>
+                                      <option value="item_wooden_arrow">item_wooden_arrow</option>
+                                      <option value="item_silver_arrow">item_silver_arrow</option>
+                                      <option value="item_blue_candle">item_blue_candle</option>
+                                      <option value="item_red_candle">item_red_candle</option>
+                                      <option value="item_whistle">item_whistle</option>
+                                      <option value="item_letter">item_letter</option>
+                                      <option value="item_blue_medicine">item_blue_medicine</option>
+                                      <option value="item_red_medicine">item_red_medicine</option>
+                                      <option value="item_wand">item_wand</option>
+                                      <option value="item_green_raft">item_green_raft</option>
+                                      <option value="item_silver_raft">item_silver_raft</option>
+                                      <option value="item_red_raft">item_red_raft</option>
+                                      <option value="item_book_of_magic">item_book_of_magic</option>
+                                      <option value="item_blue_ring">item_blue_ring</option>
+                                      <option value="item_red_ring">item_red_ring</option>
+                                      <option value="item_ladder">item_ladder</option>
+                                      <option value="item_magical_key">item_magical_key</option>
+                                      <option value="item_power_bracelet">item_power_bracelet</option>
+                                      <option value="item_rupee">item_rupee</option>
+                                      <option value="item_five_rupees">item_five_rupees</option>
+                                      <option value="item_heart">item_heart</option>
+                                      <option value="item_heart_container">item_heart_container</option>
+                                      <option value="item_clock">item_clock</option>
+                                      <option value="item_key">item_key</option>
+                                      <option value="item_dungeon_map">item_dungeon_map</option>
+                                      <option value="item_five_rupees">item_five_rupees</option>
+                                      <option value="item_dungeon_compass">item_dungeon_compass</option>
+                                      <option value="item_triforce_fragment">item_triforce_fragment</option>
+                                  </select>
+                                </div>
+                              </div>
+                              <div class="fx-grow">
+                                <div class="d-flex fx-column">
+                                    <label for="item-column-input">Column</label>
+                                    <input type="number" step=".1" min="0" name="item-column-input">
+                                </div>
+                              </div>
+                              <div class="fx-grow">
+                                <div class="d-flex fx-column">
+                                    <label for="item-line-input">Line</label>
+                                    <input type="number" step=".1" min="0" name="item-line-input">
+                                </div>
+                              </div>
+                              <div class="d-flex fx-row">
+                                <div class="fx-grow">
+                                  <div class="d-flex fx-column">
+                                      <label for="item-price-input">Price</label>
+                                      <input type="number" step="1" min="0" name="item-price-input">
+                                  </div>
+                                </div>
+                                <div class="fx-grow">
+                                  <div class="d-flex fx-column">
+                                    <button class="mt-16" name="item-remove">Remove</button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                         <div class="d-flex fx-column m-4 p-4 border-grey-1 b-white section">
