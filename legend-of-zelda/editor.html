@@ -231,6 +231,47 @@
                             </div>
                           </div>
                         </div>
+                        <div class="d-flex fx-column m-4 p-4 border-grey-1 b-white section">
+                          <div class="h-20">Enemies <button id="add-enemy" data-max="4">Add</button></div>
+                          <div class="d-flex fx-row">
+                            <div class="fx-grow">
+                              <div class="d-flex fx-column">
+                                <label for="enemy-spawn-select">Arrival</label>
+                                <select name="enemy-spawn-select">
+                                    <option value="cloud">cloud (random places)</option>
+                                    <option value="edge">edge (walking in)</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                          <div id="enemy-list" class="list">
+                            <div class="d-flex fx-row enemy-section">
+                              <div class="fx-grow">
+                                <div class="d-flex fx-column">
+                                  <label for="enemy-select">Enemy</label>
+                                  <select name="enemy-select">
+                                      <option value=""></option>
+                                      <option value="octorok_red">octorok_red</option>
+                                      <option value="octorok_red_fast">octorok_red_fast</option>
+                                      <option value="octorok_blue">octorok_blue</option>
+                                      <option value="octorok_blue_fast">octorok_blue_fast</option>
+                                  </select>
+                                </div>
+                              </div>
+                              <div class="fx-grow">
+                                <div class="d-flex fx-column">
+                                    <label for="enemy-count-input">Count</label>
+                                    <input type="number" step="1" min="1" max="8" value="1" name="enemy-count-input">
+                                </div>
+                              </div>
+                              <div class="fx-grow">
+                                <div class="d-flex fx-column">
+                                  <button class="mt-16" name="enemy-remove">Remove</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                         <div class="d-flex fx-column m-4 p-4 border-grey-1 b-white section starting-tile-parent">
                             <div class="h-20">Start <input type="checkbox" name="starting-tile"></div>
                         </div>
@@ -350,7 +391,7 @@
                 </div>
             </div>
         </div>
-		<script src="./build/index.js?v=1690454"></script>
-		<script src="./build/editor.js?v=1690454"></script>
+		<script src="./build/index.js?v=1ed351b"></script>
+		<script src="./build/editor.js?v=1ed351b"></script>
     </body>
 </html>
