@@ -4,7 +4,7 @@
 // Service worker of the page installed as an app: the network first, so that a new version is played as soon as
 // there is one, and a copy of every file to play without network. The files of the game are fetched with ?v=…
 // (see utils/io.js): the copy is looked for without it
-const CACHE = 'loz-890f1bb'
+const CACHE = 'loz-ec5b1c2'
 const FILES = [
   './',
   'build/index.js',
