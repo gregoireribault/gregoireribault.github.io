@@ -1,3 +1,4 @@
 [
-  { "id": "smooth", "name": "Smooth (Scale4x)" }
+  { "id": "smooth", "name": "Smooth (Scale4x)" },
+  { "id": "fox", "name": "Fox (original)" }
 ]
