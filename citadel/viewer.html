@@ -1,0 +1,129 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Catalogue Citadel</title><style>:root{--bg:#525659;--bar:#fff;--ink:#222;--muted:#777;--line:#ddd;--accent:#8a1c1c}*{box-sizing:border-box}body,html{height:100%}body{margin:0;font:14px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column}header{background:var(--bar);border-bottom:1px solid var(--line);padding:8px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}header a{color:var(--accent);text-decoration:none}#title{font-weight:600;flex:1 1 200px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ctl{display:flex;align-items:center;gap:4px}button,input{font:inherit;padding:4px 8px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink)}button{cursor:pointer;min-width:32px}#num{width:4.5em;text-align:right}#total,#zoomval{color:var(--muted)}#pages{flex:1;overflow:auto;padding:12px 0}.page{position:relative;margin:0 auto 12px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}.page canvas{display:block;width:100%;height:100%}.page .lbl{position:absolute;top:50%;left:0;right:0;text-align:center;color:#bbb}#msg{color:#fff;text-align:center;padding:40px 16px}</style></head><body><header><a href="./" title="Retour à la liste">← Liste</a> <span id="title"></span> <span class="ctl"><button id="prev" title="Page précédente">‹</button> <input id="num" type="number" min="1" inputmode="numeric" aria-label="Page"><span id="total"></span> <button id="next" title="Page suivante">›</button> </span><span class="ctl"><button id="zout" title="Zoom arrière">−</button><span id="zoomval"></span><button id="zin" title="Zoom avant">+</button> </span><a id="dl" download title="Télécharger le PDF">Télécharger</a></header><div id="pages"><div id="msg">Chargement…</div></div><script type="module">import * as pdfjs from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs';
+pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+const doc = params.get('doc') || '';
+const url = 'assets/pdf/' + encodeURIComponent(doc) + '.pdf';
+const box = $('pages');
+let pdf, ratio = 1200 / 864, zoom = 1, slots = [], current = 1;
+const rendered = new Map();  // page n° -> render task, limited to the pages near the viewport
+
+document.title = doc || 'Catalogue Citadel';
+$('title').textContent = doc;
+$('dl').href = url;
+
+// Page width: fit the window (max 1000px), times the zoom factor.
+const pageWidth = () => Math.round(Math.min(box.clientWidth - 24, 1000) * zoom);
+
+function layout() {
+  const w = pageWidth();
+  for (const s of slots) { s.style.width = w + 'px'; s.style.height = Math.round(w * (s.ratio || ratio)) + 'px'; }
+  $('zoomval').textContent = Math.round(zoom * 100) + ' %';
+}
+
+async function render(n) {
+  if (rendered.has(n)) return;
+  const slot = slots[n - 1];
+  const task = { cancelled: false };
+  rendered.set(n, task);
+  const page = await pdf.getPage(n);
+  if (task.cancelled) return;
+  const base = page.getViewport({ scale: 1 });
+  slot.ratio = base.height / base.width;
+  const w = slot.clientWidth;
+  slot.style.height = Math.round(w * slot.ratio) + 'px';
+  const vp = page.getViewport({ scale: w / base.width * Math.min(devicePixelRatio || 1, 2) });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.floor(vp.width); canvas.height = Math.floor(vp.height);
+  task.job = page.render({ canvasContext: canvas.getContext('2d'), viewport: vp });
+  try { await task.job.promise; } catch { return; }
+  if (task.cancelled) return;
+  slot.replaceChildren(canvas);
+}
+
+function unrender(n) {
+  const task = rendered.get(n);
+  if (!task) return;
+  task.cancelled = true; task.job?.cancel();
+  rendered.delete(n);
+  const slot = slots[n - 1];
+  slot.replaceChildren(Object.assign(document.createElement('div'), { className: 'lbl', textContent: n }));
+}
+
+// Render the pages around the viewport, free the canvases of pages far from it.
+const io = new IntersectionObserver(entries => {
+  for (const e of entries) {
+    const n = +e.target.dataset.n;
+    if (e.isIntersecting) render(n);
+  }
+  for (const n of [...rendered.keys()]) if (Math.abs(n - current) > 6) unrender(n);
+}, { root: box, rootMargin: '150% 0px' });
+
+function goTo(n, smooth) {
+  n = Math.max(1, Math.min(pdf.numPages, n | 0));
+  slots[n - 1].scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+  setCurrent(n);
+}
+
+function setCurrent(n) {
+  if (n === current && $('num').value) return;
+  current = n;
+  $('num').value = n;
+  params.set('page', n);
+  history.replaceState(null, '', '?' + params);
+}
+
+// Current page = the one crossing the top third of the viewport.
+box.addEventListener('scroll', () => {
+  const y = box.scrollTop + box.clientHeight / 3;
+  let lo = 0, hi = slots.length - 1;
+  while (lo < hi) { const m = (lo + hi + 1) >> 1; if (slots[m].offsetTop <= y) lo = m; else hi = m - 1; }
+  setCurrent(lo + 1);
+}, { passive: true });
+
+function setZoom(z) {
+  const n = current;
+  zoom = Math.max(0.5, Math.min(3, z));
+  for (const k of [...rendered.keys()]) unrender(k);
+  layout();
+  goTo(n);
+  for (const s of slots) { io.unobserve(s); io.observe(s); }
+}
+
+$('prev').onclick = () => goTo(current - 1, true);
+$('next').onclick = () => goTo(current + 1, true);
+$('num').onchange = () => goTo(+$('num').value);
+$('zin').onclick = () => setZoom(zoom * 1.25);
+$('zout').onclick = () => setZoom(zoom / 1.25);
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowLeft') goTo(current - 1);
+  else if (e.key === 'ArrowRight') goTo(current + 1);
+});
+let resizeTimer;
+addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => setZoom(zoom), 200); });
+
+try {
+  if (!doc) throw new Error('aucun document demandé');
+  // Range requests: only the pages being viewed are downloaded.
+  pdf = await pdfjs.getDocument({ url, disableAutoFetch: true, disableStream: true }).promise;
+  const first = await pdf.getPage(1);
+  const vp = first.getViewport({ scale: 1 });
+  ratio = vp.height / vp.width;
+  $('total').textContent = '/ ' + pdf.numPages;
+  $('num').max = pdf.numPages;
+  box.replaceChildren(...Array.from({ length: pdf.numPages }, (_, i) => {
+    const s = document.createElement('div');
+    s.className = 'page'; s.dataset.n = i + 1;
+    s.append(Object.assign(document.createElement('div'), { className: 'lbl', textContent: i + 1 }));
+    return s;
+  }));
+  slots = [...box.children];
+  layout();
+  current = 0;
+  goTo(+params.get('page') || 1);
+  slots.forEach(s => io.observe(s));
+} catch (err) {
+  $('msg').textContent = 'Impossible d’ouvrir le document « ' + doc + ' » : ' + err.message;
+}</script></body></html>
